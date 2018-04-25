@@ -137,6 +137,51 @@ def rename_task(msg, chat):
                      """.format(task_id, old_text, text), chat)
 
 
+def duplicate_task(msg, chat):
+    if not msg.isdigit():
+        send_message("You must inform the task id", chat)
+    else:
+        task_id = int(msg)
+        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
+        try:
+            task = query.one()
+        except sqlalchemy.orm.exc.NoResultFound:
+            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+            return
+
+        dtask = Task(chat=task.chat, name=task.name, status=task.status, dependencies=task.dependencies,
+                     parents=task.parents, priority=task.priority, duedate=task.duedate)
+        db.SESSION.add(dtask)
+
+        for t in task.dependencies.split(',')[:-1]:
+            qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
+            t = qy.one()
+            t.parents += '{},'.format(dtask.id)
+
+        db.SESSION.commit()
+        send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
+
+
+def delete_task(msg, chat):
+    if not msg.isdigit():
+        send_message("You must inform the task id", chat)
+    else:
+        task_id = int(msg)
+        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
+        try:
+            task = query.one()
+        except sqlalchemy.orm.exc.NoResultFound:
+            send_message("_404_ Task {} not found x.x".format(task_id), chat)
+            return
+        for t in task.dependencies.split(',')[:-1]:
+            qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
+            t = qy.one()
+            t.parents = t.parents.replace('{},'.format(task.id), '')
+        db.SESSION.delete(task)
+        db.SESSION.commit()
+        send_message("Task [[{}]] deleted".format(task_id), chat)
+
+
 def handle_updates(updates):
     for update in updates["result"]:
         if 'message' in update:
@@ -163,47 +208,10 @@ def handle_updates(updates):
             rename_task(msg, chat)
 
         elif command == '/duplicate':
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
-                    return
-
-                dtask = Task(chat=task.chat, name=task.name, status=task.status, dependencies=task.dependencies,
-                             parents=task.parents, priority=task.priority, duedate=task.duedate)
-                db.SESSION.add(dtask)
-
-                for t in task.dependencies.split(',')[:-1]:
-                    qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
-                    t = qy.one()
-                    t.parents += '{},'.format(dtask.id)
-
-                db.SESSION.commit()
-                send_message("New task *TODO* [[{}]] {}".format(dtask.id, dtask.name), chat)
+            duplicate_task(msg, chat)
 
         elif command == '/delete':
-            if not msg.isdigit():
-                send_message("You must inform the task id", chat)
-            else:
-                task_id = int(msg)
-                query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-                try:
-                    task = query.one()
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x".format(task_id), chat)
-                    return
-                for t in task.dependencies.split(',')[:-1]:
-                    qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
-                    t = qy.one()
-                    t.parents = t.parents.replace('{},'.format(task.id), '')
-                db.SESSION.delete(task)
-                db.SESSION.commit()
-                send_message("Task [[{}]] deleted".format(task_id), chat)
+            delete_task(msg, chat)
 
         elif command == '/todo':
             if not msg.isdigit():
