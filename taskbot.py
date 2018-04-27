@@ -340,7 +340,7 @@ def handle_updates(updates):
             send_message("Here is a list of things you can do.", chat)
             send_message(HELP, chat)
         else:
-            send_message("I'm sorry dave. I'm afraid I can't do that.", chat)
+            send_message("I'm sorry " + str(message['chat']['first_name']) + ". I'm afraid I can't do that.", chat)
 
 
 def main():
