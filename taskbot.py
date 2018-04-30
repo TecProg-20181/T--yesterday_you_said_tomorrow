@@ -469,7 +469,7 @@ def main():
         print("Updates")
         updates = get_updates(last_update_id)
 
-        if len(updates["result"]) > 0:
+        if updates["result"] != "":
             last_update_id = get_last_update_id(updates) + 1
             handle_updates(updates)
 
