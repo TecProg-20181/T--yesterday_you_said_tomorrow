@@ -241,10 +241,10 @@ def done_task(msg, chat):
         send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
 
 
-def list_tasks(msg, chat):
-    a = ''
+def list_tasks(chat):
+    msg = ''
 
-    a += '\U0001F4CB Task List\n'
+    msg += '\U0001F4CB Task List\n'
     query = (db.SESSION
              .query(Task)
              .filter_by(parents='', chat=chat)
@@ -256,36 +256,36 @@ def list_tasks(msg, chat):
         elif task.status == 'DONE':
             icon = '\U00002611'
 
-        a += '[[{}]] {} {}\n'.format(task.id, icon, task.name)
-        a += deps_text(task, chat)
+        msg += '[[{}]] {} {}\n'.format(task.id, icon, task.name)
+        msg += deps_text(task, chat)
 
-    send_message(a, chat)
-    a = ''
+    send_message(msg, chat)
+    msg = ''
 
-    a += '\U0001F4DD _Status_\n'
+    msg += '\U0001F4DD _Status_\n'
     query = (db.SESSION
              .query(Task)
              .filter_by(status='TODO', chat=chat)
              .order_by(Task.id))
-    a += '\n\U0001F195 *TODO*\n'
+    msg += '\n\U0001F195 *TODO*\n'
     for task in query.all():
-        a += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {}\n'.format(task.id, task.name)
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DOING', chat=chat)
              .order_by(Task.id))
-    a += '\n\U000023FA *DOING*\n'
+    msg += '\n\U000023FA *DOING*\n'
     for task in query.all():
-        a += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {}\n'.format(task.id, task.name)
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
              .order_by(Task.id))
-    a += '\n\U00002611 *DONE*\n'
+    msg += '\n\U00002611 *DONE*\n'
     for task in query.all():
-        a += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {}\n'.format(task.id, task.name)
 
-    send_message(a, chat)
+    send_message(msg, chat)
 
 
 def depend_on_task(msg, chat):
@@ -420,7 +420,7 @@ def handle_updates(updates):
             done_task(msg, chat)
 
         elif command == '/list':
-            list_tasks(msg, chat)
+            list_tasks(chat)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
