@@ -107,6 +107,11 @@ def deps_text(task, chat, preceed=''):
     return text
 
 
+def missing_id_error(chat):
+    """send message acusing missing id in the command"""
+    send_message("You must inform the task id", chat)
+
+
 def new_task(name, chat):
     """Create a new issue with the named by user"""
     task = Task(chat=chat,
@@ -129,7 +134,7 @@ def rename_task(msg, chat):
         msg = msg.split(' ', 1)[0]
 
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -157,7 +162,7 @@ def rename_task(msg, chat):
 def duplicate_task(msg, chat):
     """copy a task by id"""
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -189,7 +194,7 @@ def duplicate_task(msg, chat):
 def delete_task(msg, chat):
     """delete a task by id"""
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -210,7 +215,7 @@ def delete_task(msg, chat):
 def todo_task(msg, chat):
     """set status of task to TODO"""
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -227,7 +232,7 @@ def todo_task(msg, chat):
 def doing_task(msg, chat):
     """set status of task to DOING"""
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -244,7 +249,7 @@ def doing_task(msg, chat):
 def done_task(msg, chat):
     """set status of task to DONE"""
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -315,7 +320,7 @@ def depend_on_task(msg, chat):
         msg = msg.split(' ', 1)[0]
 
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
@@ -372,7 +377,7 @@ def prioritize_task(msg, chat):
         msg = msg.split(' ', 1)[0]
 
     if not msg.isdigit():
-        send_message("You must inform the task id", chat)
+        missing_id_error(chat)
     else:
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
