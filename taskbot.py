@@ -35,16 +35,16 @@ def get_url(url):
 
 def get_json_from_url(url):
     content = get_url(url)
-    js = json.loads(content)
-    return js
+    payload = json.loads(content)
+    return payload
 
 
 def get_updates(offset=None):
     url = URL + "getUpdates?timeout=100"
     if offset:
         url += "&offset={}".format(offset)
-    js = get_json_from_url(url)
-    return js
+    payload = get_json_from_url(url)
+    return payload
 
 
 def send_message(text, chat_id, reply_markup=None):
@@ -163,10 +163,10 @@ def duplicate_task(msg, chat):
                      duedate=task.duedate)
         db.SESSION.add(dtask)
 
-        for t in task.dependencies.split(',')[:-1]:
-            qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
-            t = qy.one()
-            t.parents += '{},'.format(dtask.id)
+        for item in task.dependencies.split(',')[:-1]:
+            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+            item = querry.one()
+            item.parents += '{},'.format(dtask.id)
 
         db.SESSION.commit()
         send_message("New task *TODO* [[{}]] {}"
@@ -184,10 +184,10 @@ def delete_task(msg, chat):
         except sqlalchemy.orm.exc.NoResultFound:
             send_message("_404_ Task {} not found x.x".format(task_id), chat)
             return
-        for t in task.dependencies.split(',')[:-1]:
-            qy = db.SESSION.query(Task).filter_by(id=int(t), chat=chat)
-            t = qy.one()
-            t.parents = t.parents.replace('{},'.format(task.id), '')
+        for item in task.dependencies.split(',')[:-1]:
+            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+            item = querry.one()
+            item.parents = item.parents.replace('{},'.format(task.id), '')
         db.SESSION.delete(task)
         db.SESSION.commit()
         send_message("Task [[{}]] deleted".format(task_id), chat)
@@ -309,9 +309,9 @@ def depend_on_task(msg, chat):
         if text == '':
             for i in task.dependencies.split(',')[:-1]:
                 i = int(i)
-                q = db.SESSION.query(Task).filter_by(id=i, chat=chat)
-                t = q.one()
-                t.parents = t.parents.replace('{},'.format(task.id), '')
+                querry = db.SESSION.query(Task).filter_by(id=i, chat=chat)
+                item = querry.one()
+                item.parents = item.parents.replace('{},'.format(task.id), '')
 
             task.dependencies = ''
             send_message("Dependencies removed from task {}".format(task_id),
