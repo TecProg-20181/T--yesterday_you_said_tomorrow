@@ -1,3 +1,10 @@
+"""
+    Main code of Taskbot
+    Generate a token from BotFather and make the following command at
+        the terminal:
+    export BOT_API_TOKEN="<your token here>"
+    then, call python3 taskbot.py and voila, your bot is now running
+"""
 #!/usr/bin/env python3
 
 import os
@@ -28,18 +35,21 @@ HELP = """
 
 
 def get_url(url):
+    """get response content of given url"""
     response = requests.get(url)
     content = response.content.decode("utf8")
     return content
 
 
 def get_json_from_url(url):
+    """get json content of the given url"""
     content = get_url(url)
     payload = json.loads(content)
     return payload
 
 
 def get_updates(offset=None):
+    """request new information from API"""
     url = URL + "getUpdates?timeout=100"
     if offset:
         url += "&offset={}".format(offset)
@@ -48,6 +58,7 @@ def get_updates(offset=None):
 
 
 def send_message(text, chat_id, reply_markup=None):
+    """send message to the user"""
     text = urllib.parse.quote_plus(text)
     url = URL + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
                  .format(text, chat_id))
@@ -57,6 +68,7 @@ def send_message(text, chat_id, reply_markup=None):
 
 
 def get_last_update_id(updates):
+    """get the last update"""
     update_ids = []
     for update in updates["result"]:
         update_ids.append(int(update["update_id"]))
@@ -65,6 +77,7 @@ def get_last_update_id(updates):
 
 
 def deps_text(task, chat, preceed=''):
+    """list tasks in a tree view"""
     text = ''
 
     for i in range(len(task.dependencies.split(',')[:-1])):
@@ -95,9 +108,7 @@ def deps_text(task, chat, preceed=''):
 
 
 def new_task(name, chat):
-    """
-        Create a new issue with the named by user
-    """
+    """Create a new issue with the named by user"""
     task = Task(chat=chat,
                 name=name,
                 status='TODO',
@@ -110,6 +121,7 @@ def new_task(name, chat):
 
 
 def rename_task(msg, chat):
+    """rename a task by id"""
     text = ''
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
@@ -143,6 +155,7 @@ def rename_task(msg, chat):
 
 
 def duplicate_task(msg, chat):
+    """copy a task by id"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -174,6 +187,7 @@ def duplicate_task(msg, chat):
 
 
 def delete_task(msg, chat):
+    """delete a task by id"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -194,6 +208,7 @@ def delete_task(msg, chat):
 
 
 def todo_task(msg, chat):
+    """set status of task to TODO"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -209,7 +224,8 @@ def todo_task(msg, chat):
         send_message("*TODO* task [[{}]] {}".format(task.id, task.name), chat)
 
 
-def doing_task (msg, chat):
+def doing_task(msg, chat):
+    """set status of task to DOING"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -226,6 +242,7 @@ def doing_task (msg, chat):
 
 
 def done_task(msg, chat):
+    """set status of task to DONE"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
     else:
@@ -242,6 +259,7 @@ def done_task(msg, chat):
 
 
 def list_tasks(chat):
+    """lists all the tasks"""
     msg = ''
 
     msg += '\U0001F4CB Task List\n'
@@ -289,6 +307,7 @@ def list_tasks(chat):
 
 
 def depend_on_task(msg, chat):
+    """set dependencies of the task"""
     text = ''
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
@@ -345,6 +364,7 @@ def depend_on_task(msg, chat):
 
 
 def prioritize_task(msg, chat):
+    """set the priority of given task"""
     text = ''
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
@@ -380,6 +400,7 @@ def prioritize_task(msg, chat):
 
 
 def handle_updates(updates):
+    """read the user command and calls the property methods"""
     for update in updates["result"]:
         if 'message' in update:
             message = update['message']
@@ -441,6 +462,7 @@ def handle_updates(updates):
 
 
 def main():
+    """get updates continuosly and manage instructions"""
     last_update_id = None
 
     while True:
