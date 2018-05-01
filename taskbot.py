@@ -119,7 +119,7 @@ def new_task(name, chat):
                 status='TODO',
                 dependencies='',
                 parents='',
-                priority='')
+                priority='2')
     db.SESSION.add(task)
     db.SESSION.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
