@@ -6,10 +6,11 @@ from sqlalchemy.types import *
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = create_engine('sqlite:///db.sqlite3', echo=True)
-Session = sessionmaker(bind=engine)
-session = Session()
+SESSION = sessionmaker(bind=engine)
+SESSION = SESSION()
 
 Base = declarative_base()
+
 
 class Task(Base):
     __tablename__ = 'tasks'
