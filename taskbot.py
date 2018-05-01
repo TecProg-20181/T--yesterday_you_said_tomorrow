@@ -34,6 +34,11 @@ HELP = """
 """
 
 
+class MessageException(Exception):
+    """Just to specify a kind of Exception"""
+    pass
+
+
 def get_url(url):
     """get response content of given url"""
     response = requests.get(url)
@@ -111,14 +116,14 @@ def get_task(msg, chat):
     """send message acusing missing id in the command"""
     if not msg.isdigit():
         send_message("You must inform the task id", chat)
-        raise Exception()
+        raise MessageException('id not provided')
     task_id = int(msg)
     query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
     try:
         task = query.one()
     except sqlalchemy.orm.exc.NoResultFound:
         send_message("_404_ Task {} not found x.x".format(task_id), chat)
-        raise Exception()
+        raise MessageException('task not found')
     return task
 
 
@@ -144,7 +149,7 @@ def rename_task(msg, chat):
         msg = msg.split(' ', 1)[0]
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
     if text == '':
         send_message("""
@@ -165,7 +170,7 @@ def duplicate_task(msg, chat):
     """copy a task by id"""
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
 
     dtask = Task(chat=task.chat,
@@ -191,7 +196,7 @@ def delete_task(msg, chat):
     """delete a task by id"""
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
     for item in task.dependencies.split(',')[:-1]:
         querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
@@ -206,7 +211,7 @@ def todo_task(msg, chat):
     """set status of task to TODO"""
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
     task.status = 'TODO'
     db.SESSION.commit()
@@ -217,7 +222,7 @@ def doing_task(msg, chat):
     """set status of task to DOING"""
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
     task.status = 'DOING'
     db.SESSION.commit()
@@ -228,7 +233,7 @@ def done_task(msg, chat):
     """set status of task to DONE"""
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
     task.status = 'DONE'
     db.SESSION.commit()
@@ -293,7 +298,7 @@ def depend_on_task(msg, chat):
 
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
 
     if text == '':
@@ -344,7 +349,7 @@ def prioritize_task(msg, chat):
 
     try:
         task = get_task(msg, chat)
-    except Exception:
+    except MessageException:
         return
 
     if text == '':
