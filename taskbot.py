@@ -107,9 +107,19 @@ def deps_text(task, chat, preceed=''):
     return text
 
 
-def missing_id_error(chat):
+def get_task(msg, chat):
     """send message acusing missing id in the command"""
-    send_message("You must inform the task id", chat)
+    if not msg.isdigit():
+        send_message("You must inform the task id", chat)
+        raise Exception()
+    task_id = int(msg)
+    query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
+    try:
+        task = query.one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        send_message("_404_ Task {} not found x.x".format(task_id), chat)
+        raise Exception()
+    return task
 
 
 def new_task(name, chat):
@@ -132,135 +142,97 @@ def rename_task(msg, chat):
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
-
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
-
-        if text == '':
-            send_message("""
-                          You want to modify task {},
-                          but you didn't provide any new text
-                         """.format(task_id), chat)
-            return
-
-        old_text = task.name
-        task.name = text
-        db.SESSION.commit()
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+    if text == '':
         send_message("""
-                      Task {} redefined from {} to {}
-                     """.format(task_id, old_text, text), chat)
+                      You want to modify task {},
+                      but you didn't provide any new text
+                     """.format(task.id), chat)
+        return
+
+    old_text = task.name
+    task.name = text
+    db.SESSION.commit()
+    send_message("""
+                  Task {} redefined from {} to {}
+                 """.format(task.id, old_text, text), chat)
 
 
 def duplicate_task(msg, chat):
     """copy a task by id"""
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
 
-        dtask = Task(chat=task.chat,
-                     name=task.name,
-                     status=task.status,
-                     dependencies=task.dependencies,
-                     parents=task.parents,
-                     priority=task.priority,
-                     duedate=task.duedate)
-        db.SESSION.add(dtask)
+    dtask = Task(chat=task.chat,
+                 name=task.name,
+                 status=task.status,
+                 dependencies=task.dependencies,
+                 parents=task.parents,
+                 priority=task.priority,
+                 duedate=task.duedate)
+    db.SESSION.add(dtask)
 
-        for item in task.dependencies.split(',')[:-1]:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.parents += '{},'.format(dtask.id)
+    for item in task.dependencies.split(',')[:-1]:
+        querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+        item = querry.one()
+        item.parents += '{},'.format(dtask.id)
 
-        db.SESSION.commit()
-        send_message("New task *TODO* [[{}]] {}"
-                     .format(dtask.id, dtask.name), chat)
+    db.SESSION.commit()
+    send_message("New task *TODO* [[{}]] {}"
+                 .format(dtask.id, dtask.name), chat)
 
 
 def delete_task(msg, chat):
     """delete a task by id"""
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
-        for item in task.dependencies.split(',')[:-1]:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.parents = item.parents.replace('{},'.format(task.id), '')
-        db.SESSION.delete(task)
-        db.SESSION.commit()
-        send_message("Task [[{}]] deleted".format(task_id), chat)
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+    for item in task.dependencies.split(',')[:-1]:
+        querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+        item = querry.one()
+        item.parents = item.parents.replace('{},'.format(task.id), '')
+    db.SESSION.delete(task)
+    db.SESSION.commit()
+    send_message("Task [[{}]] deleted".format(task.id), chat)
 
 
 def todo_task(msg, chat):
     """set status of task to TODO"""
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
-        task.status = 'TODO'
-        db.SESSION.commit()
-        send_message("*TODO* task [[{}]] {}".format(task.id, task.name), chat)
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+    task.status = 'TODO'
+    db.SESSION.commit()
+    send_message("*TODO* task [[{}]] {}".format(task.id, task.name), chat)
 
 
 def doing_task(msg, chat):
     """set status of task to DOING"""
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
-        task.status = 'DOING'
-        db.SESSION.commit()
-        send_message("*DOING* task [[{}]] {}".format(task.id, task.name), chat)
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+    task.status = 'DOING'
+    db.SESSION.commit()
+    send_message("*DOING* task [[{}]] {}".format(task.id, task.name), chat)
 
 
 def done_task(msg, chat):
     """set status of task to DONE"""
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
-        task.status = 'DONE'
-        db.SESSION.commit()
-        send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+    task.status = 'DONE'
+    db.SESSION.commit()
+    send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
 
 
 def list_tasks(chat):
@@ -319,53 +291,47 @@ def depend_on_task(msg, chat):
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
 
-    if not msg.isdigit():
-        missing_id_error(chat)
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
+
+    if text == '':
+        for i in task.dependencies.split(',')[:-1]:
+            i = int(i)
+            querry = db.SESSION.query(Task).filter_by(id=i, chat=chat)
+            item = querry.one()
+            item.parents = item.parents.replace('{},'.format(task.id), '')
+
+        task.dependencies = ''
+        send_message("Dependencies removed from task {}".format(task.id),
+                     chat)
     else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
+        for depid in text.split(' '):
+            if not depid.isdigit():
+                send_message("""
+                                All dependencies ids must be numeric,
+                                and not {}
+                             """.format(depid), chat)
+            else:
+                depid = int(depid)
+                query = (db.SESSION
+                         .query(Task)
+                         .filter_by(id=depid, chat=chat))
+                try:
+                    taskdep = query.one()
+                    taskdep.parents += str(task.id) + ','
+                except sqlalchemy.orm.exc.NoResultFound:
+                    send_message("_404_ Task {} not found x.x"
+                                 .format(depid), chat)
+                    continue
 
-        if text == '':
-            for i in task.dependencies.split(',')[:-1]:
-                i = int(i)
-                querry = db.SESSION.query(Task).filter_by(id=i, chat=chat)
-                item = querry.one()
-                item.parents = item.parents.replace('{},'.format(task.id), '')
+                deplist = task.dependencies.split(',')
+                if str(depid) not in deplist:
+                    task.dependencies += str(depid) + ','
 
-            task.dependencies = ''
-            send_message("Dependencies removed from task {}".format(task_id),
-                         chat)
-        else:
-            for depid in text.split(' '):
-                if not depid.isdigit():
-                    send_message("""
-                                    All dependencies ids must be numeric,
-                                    and not {}
-                                 """.format(depid), chat)
-                else:
-                    depid = int(depid)
-                    query = (db.SESSION
-                             .query(Task)
-                             .filter_by(id=depid, chat=chat))
-                    try:
-                        taskdep = query.one()
-                        taskdep.parents += str(task.id) + ','
-                    except sqlalchemy.orm.exc.NoResultFound:
-                        send_message("_404_ Task {} not found x.x"
-                                     .format(depid), chat)
-                        continue
-
-                    deplist = task.dependencies.split(',')
-                    if str(depid) not in deplist:
-                        task.dependencies += str(depid) + ','
-
-        db.SESSION.commit()
-        send_message("Task {} dependencies up to date".format(task_id), chat)
+    db.SESSION.commit()
+    send_message("Task {} dependencies up to date".format(task.id), chat)
 
 
 def prioritize_task(msg, chat):
@@ -376,32 +342,26 @@ def prioritize_task(msg, chat):
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
 
-    if not msg.isdigit():
-        missing_id_error(chat)
-    else:
-        task_id = int(msg)
-        query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
-        try:
-            task = query.one()
-        except sqlalchemy.orm.exc.NoResultFound:
-            send_message("_404_ Task {} not found x.x".format(task_id), chat)
-            return
+    try:
+        task = get_task(msg, chat)
+    except Exception:
+        return
 
-        if text == '':
-            task.priority = ''
-            send_message("_Cleared_ all priorities from task {}"
-                         .format(task_id), chat)
+    if text == '':
+        task.priority = ''
+        send_message("_Cleared_ all priorities from task {}"
+                     .format(task.id), chat)
+    else:
+        if text.lower() not in ['high', 'medium', 'low']:
+            send_message("""
+                            The priority *must be* one of the following:
+                            high, medium, low
+                        """, chat)
         else:
-            if text.lower() not in ['high', 'medium', 'low']:
-                send_message("""
-                                The priority *must be* one of the following:
-                                high, medium, low
-                            """, chat)
-            else:
-                task.priority = text.lower()
-                send_message("*Task {}* priority has priority *{}*"
-                             .format(task_id, text.lower()), chat)
-        db.SESSION.commit()
+            task.priority = text.lower()
+            send_message("*Task {}* priority has priority *{}*"
+                         .format(task.id, text.lower()), chat)
+    db.SESSION.commit()
 
 
 def handle_updates(updates):
