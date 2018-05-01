@@ -28,7 +28,7 @@ HELP = """
  /doing ID
  /done ID
  /delete ID
- /list
+ /list{I (list by id), P (list by priority)}
  /rename ID NOME
  /dependson ID ID...
  /duplicate ID
@@ -137,7 +137,7 @@ def new_task(name, chat):
                 status='TODO',
                 dependencies='',
                 parents='',
-                priority='')
+                priority='2')
     db.SESSION.add(task)
     db.SESSION.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
@@ -211,7 +211,7 @@ def set_task_status(msg, chat, status):
     send_message("*{}* task [[{}]] {}".format(status, task.id, task.name), chat)
 
 
-def list_tasks(chat):
+def list_tasks(chat, order):
     """lists all the tasks"""
     msg = ''
 
@@ -234,27 +234,32 @@ def list_tasks(chat):
     msg = ''
 
     msg += '\U0001F4DD _Status_\n'
+
     query = (db.SESSION
              .query(Task)
              .filter_by(status='TODO', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U0001F195 *TODO*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
+
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DOING', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U000023FA *DOING*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U00002611 *DONE*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
 
     send_message(msg, chat)
 
@@ -316,18 +321,18 @@ def prioritize_task(msg, chat):
         send_message("_Cleared_ all priorities from task {}"
                      .format(task.id), chat)
     else:
-        if text.lower() not in ['high', 'medium', 'low']:
-            send_message("""
-                            The priority *must be* one of the following:
-                            high, medium, low
-                        """, chat)
-        else:
-            task.priority = text.lower()
-            send_message("*Task {}* priority has priority *{}*"
-                         .format(task.id, text.lower()), chat)
-    db.SESSION.commit()
+          if text.lower() not in ['high', 'medium', 'low']:
+              send_message("""
+                              The priority *must be* one of the following:
+                              high, medium, low
+                           """, chat)
+          else:
+              task.priority = dict_priority(text.lower())
+              send_message("*Task {}* priority has priority *{}*"
+                           .format(task_id, text.lower()), chat)
+        db.SESSION.commit()
 
-
+        
 def get_message(update):
     """return the message catched by update"""
     if 'message' in update:
@@ -338,6 +343,17 @@ def get_message(update):
         print('Can\'t process! {}'.format(update))
         raise MessageException('Not recognizable message')
     return message
+
+
+def dict_priority(priority):
+    return {
+        'high': '1',
+        'medium': '2',
+        'low': '3',
+        '1': 'high',
+        '2': 'medium',
+        '3': 'low',
+    }[priority]
 
 
 def handle_updates(updates):
@@ -378,8 +394,13 @@ def handle_updates(updates):
         elif command == '/done':
             set_task_status(msg, chat, DONE)
 
-        elif command == '/list':
-            list_tasks(chat)
+        elif command == '/listP':
+            order = Task.priority
+            list_tasks(chat, order)
+
+        elif command == '/listI':
+            order = Task.id
+            list_tasks(chat, order)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
