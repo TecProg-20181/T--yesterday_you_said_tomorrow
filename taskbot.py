@@ -25,7 +25,7 @@ HELP = """
  /doing ID
  /done ID
  /delete ID
- /list
+ /list{I (list by id), P (list by priority)}
  /rename ID NOME
  /dependson ID ID...
  /duplicate ID
@@ -263,7 +263,7 @@ def done_task(msg, chat):
         send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
 
 
-def list_tasks(chat):
+def list_tasks(chat, order):
     """lists all the tasks"""
     msg = ''
 
@@ -286,27 +286,32 @@ def list_tasks(chat):
     msg = ''
 
     msg += '\U0001F4DD _Status_\n'
+
     query = (db.SESSION
              .query(Task)
              .filter_by(status='TODO', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U0001F195 *TODO*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
+
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DOING', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U000023FA *DOING*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
-             .order_by(Task.id))
+             .order_by(order))
     msg += '\n\U00002611 *DONE*\n'
+
     for task in query.all():
-        msg += '[[{}]] {}\n'.format(task.id, task.name)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
 
     send_message(msg, chat)
 
@@ -398,10 +403,22 @@ def prioritize_task(msg, chat):
                                 high, medium, low
                             """, chat)
             else:
-                task.priority = text.lower()
+
+                task.priority = dict_priority(text.lower())
                 send_message("*Task {}* priority has priority *{}*"
                              .format(task_id, text.lower()), chat)
         db.SESSION.commit()
+
+
+def dict_priority(priority):
+    return {
+        'high': '1',
+        'medium': '2',
+        'low': '3',
+        '1': 'high',
+        '2': 'medium',
+        '3': 'low',
+    }[priority]
 
 
 def handle_updates(updates):
@@ -445,8 +462,13 @@ def handle_updates(updates):
         elif command == '/done':
             done_task(msg, chat)
 
-        elif command == '/list':
-            list_tasks(chat)
+        elif command == '/listP':
+            order = Task.priority
+            list_tasks(chat, order)
+
+        elif command == '/listI':
+            order = Task.id
+            list_tasks(chat, order)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
