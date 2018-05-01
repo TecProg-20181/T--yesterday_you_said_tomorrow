@@ -294,27 +294,15 @@ def depend_on_task(msg, chat):
                      chat)
     else:
         for depid in text.split(' '):
-            if not depid.isdigit():
-                send_message("""
-                                All dependencies ids must be numeric,
-                                and not {}
-                             """.format(depid), chat)
-            else:
-                depid = int(depid)
-                query = (db.SESSION
-                         .query(Task)
-                         .filter_by(id=depid, chat=chat))
-                try:
-                    taskdep = query.one()
-                    taskdep.parents += str(task.id) + ','
-                except sqlalchemy.orm.exc.NoResultFound:
-                    send_message("_404_ Task {} not found x.x"
-                                 .format(depid), chat)
-                    continue
+            try:
+                taskdep = get_task(depid, chat)
+            except MessageException:
+                continue
 
-                deplist = task.dependencies.split(',')
-                if str(depid) not in deplist:
-                    task.dependencies += str(depid) + ','
+            taskdep.parents += str(task.id) + ','
+            deplist = task.dependencies.split(',')
+            if str(depid) not in deplist:
+                task.dependencies += str(depid) + ','
 
     db.SESSION.commit()
     send_message("Task {} dependencies up to date".format(task.id), chat)
