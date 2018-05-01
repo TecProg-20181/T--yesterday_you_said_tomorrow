@@ -25,7 +25,7 @@ HELP = """
  /doing ID
  /done ID
  /delete ID
- /list
+ /list{I (list by id), P (list by priority)}
  /rename ID NOME
  /dependson ID ID...
  /duplicate ID
@@ -263,7 +263,7 @@ def done_task(msg, chat):
         send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
 
 
-def list_tasks(chat):
+def list_tasks(chat, order):
     """lists all the tasks"""
     msg = ''
 
@@ -290,7 +290,7 @@ def list_tasks(chat):
     query = (db.SESSION
              .query(Task)
              .filter_by(status='TODO', chat=chat)
-             .order_by(Task.priority))
+             .order_by(order))
     msg += '\n\U0001F195 *TODO*\n'
 
     for task in query.all():
@@ -299,7 +299,7 @@ def list_tasks(chat):
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DOING', chat=chat)
-             .order_by(Task.priority))
+             .order_by(order))
     msg += '\n\U000023FA *DOING*\n'
 
     for task in query.all():
@@ -307,7 +307,7 @@ def list_tasks(chat):
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
-             .order_by(Task.priority))
+             .order_by(order))
     msg += '\n\U00002611 *DONE*\n'
 
     for task in query.all():
@@ -462,8 +462,13 @@ def handle_updates(updates):
         elif command == '/done':
             done_task(msg, chat)
 
-        elif command == '/list':
-            list_tasks(chat)
+        elif command == '/listP':
+            order = Task.priority
+            list_tasks(chat, order)
+
+        elif command == '/listI':
+            order = Task.id
+            list_tasks(chat, order)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
