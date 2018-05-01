@@ -328,15 +328,24 @@ def prioritize_task(msg, chat):
     db.SESSION.commit()
 
 
+def get_message(update):
+    """return the message catched by update"""
+    if 'message' in update:
+        message = update['message']
+    elif 'edited_message' in update:
+        message = update['edited_message']
+    else:
+        print('Can\'t process! {}'.format(update))
+        raise MessageException('Not recognizable message')
+    return message
+
+
 def handle_updates(updates):
     """read the user command and calls the property methods"""
     for update in updates["result"]:
-        if 'message' in update:
-            message = update['message']
-        elif 'edited_message' in update:
-            message = update['edited_message']
-        else:
-            print('Can\'t process! {}'.format(update))
+        try:
+            message = get_message(update)
+        except MessageException:
             return
 
         command = message["text"].split(" ", 1)[0]
