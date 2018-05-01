@@ -463,7 +463,8 @@ def handle_updates(updates):
             send_message(HELP, chat)
 
         else:
-            send_message("I'm sorry " + str(message['chat']['first_name']) + ". I'm afraid I can't do that.", chat)
+            send_message("I'm sorry " + str(message['chat']['first_name']) +
+                         ". I'm afraid I can't do that.", chat)
 
 
 def main():
@@ -474,7 +475,7 @@ def main():
         print("Updates")
         updates = get_updates(last_update_id)
 
-        if updates["result"] != "":
+        if updates["result"]:
             last_update_id = get_last_update_id(updates) + 1
             handle_updates(updates)
 
