@@ -290,28 +290,28 @@ def list_tasks(chat):
     query = (db.SESSION
              .query(Task)
              .filter_by(status='TODO', chat=chat)
-             .order_by(Task.id))
+             .order_by(Task.priority))
     msg += '\n\U0001F195 *TODO*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, task.priority)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
 
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DOING', chat=chat)
-             .order_by(Task.id))
+             .order_by(Task.priority))
     msg += '\n\U000023FA *DOING*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, task.priority)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
-             .order_by(Task.id))
+             .order_by(Task.priority))
     msg += '\n\U00002611 *DONE*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, task.priority)
+        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
 
     send_message(msg, chat)
 
@@ -412,9 +412,12 @@ def prioritize_task(msg, chat):
 
 def dict_priority(priority):
     return {
-        'high': 1,
-        'medium': 2,
-        'low': 3,
+        'high': '1',
+        'medium': '2',
+        'low': '3',
+        '1': 'high',
+        '2': 'medium',
+        '3': 'low',
     }[priority]
 
 
