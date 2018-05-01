@@ -19,6 +19,9 @@ from db import Task
 TOKEN = os.environ['BOT_API_TOKEN']
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 
+TODO = 'TODO'
+DOING = 'DOING'
+DONE = 'DONE'
 HELP = """
  /new NOME
  /todo ID
@@ -207,37 +210,15 @@ def delete_task(msg, chat):
     send_message("Task [[{}]] deleted".format(task.id), chat)
 
 
-def todo_task(msg, chat):
+def set_task_status(msg, chat, status):
     """set status of task to TODO"""
     try:
         task = get_task(msg, chat)
     except MessageException:
         return
-    task.status = 'TODO'
+    task.status = status
     db.SESSION.commit()
-    send_message("*TODO* task [[{}]] {}".format(task.id, task.name), chat)
-
-
-def doing_task(msg, chat):
-    """set status of task to DOING"""
-    try:
-        task = get_task(msg, chat)
-    except MessageException:
-        return
-    task.status = 'DOING'
-    db.SESSION.commit()
-    send_message("*DOING* task [[{}]] {}".format(task.id, task.name), chat)
-
-
-def done_task(msg, chat):
-    """set status of task to DONE"""
-    try:
-        task = get_task(msg, chat)
-    except MessageException:
-        return
-    task.status = 'DONE'
-    db.SESSION.commit()
-    send_message("*DONE* task [[{}]] {}".format(task.id, task.name), chat)
+    send_message("*{}* task [[{}]] {}".format(status, task.id, task.name), chat)
 
 
 def list_tasks(chat):
@@ -402,13 +383,13 @@ def handle_updates(updates):
             delete_task(msg, chat)
 
         elif command == '/todo':
-            todo_task(msg, chat)
+            set_task_status(msg, chat, TODO)
 
         elif command == '/doing':
-            doing_task(msg, chat)
+            set_task_status(msg, chat, DOING)
 
         elif command == '/done':
-            done_task(msg, chat)
+            set_task_status(msg, chat, DONE)
 
         elif command == '/list':
             list_tasks(chat)
