@@ -131,7 +131,7 @@ def get_task(msg, chat):
 
 
 def new_task(name, chat):
-    """Create a new issue with the named by user"""
+    """Create and returns a new task named by the user"""
     task = Task(chat=chat,
                 name=name,
                 status='TODO',
@@ -141,6 +141,7 @@ def new_task(name, chat):
     db.SESSION.add(task)
     db.SESSION.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
+    return task
 
 
 def rename_task(msg, chat):
@@ -176,23 +177,12 @@ def duplicate_task(msg, chat):
     except MessageException:
         return
 
-    dtask = Task(chat=task.chat,
-                 name=task.name,
-                 status=task.status,
-                 dependencies=task.dependencies,
-                 parents=task.parents,
-                 priority=task.priority,
-                 duedate=task.duedate)
-    db.SESSION.add(dtask)
+    dtask = new_task(task.name, chat)
 
     for item in task.dependencies.split(',')[:-1]:
         querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
         item = querry.one()
         item.parents += '{},'.format(dtask.id)
-
-    db.SESSION.commit()
-    send_message("New task *TODO* [[{}]] {}"
-                 .format(dtask.id, dtask.name), chat)
 
 
 def delete_task(msg, chat):
