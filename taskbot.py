@@ -289,16 +289,21 @@ def depend_on_task(msg, chat):
                      chat)
     else:
         for depid in text.split(' '):
-            try:
-                taskdep = get_task(depid, chat)
-            except MessageException:
+            if str(depid) in task.parents.split(',')[:-1]:
+                send_message("Circular dependency, task {} depends on a task {}"
+                             .format(depid, task.id), chat)
                 continue
+            else:
+                try:
+                    taskdep = get_task(depid, chat)
+                except MessageException:
+                    continue
 
-            taskdep.parents += str(task.id) + ','
-            deplist = task.dependencies.split(',')
-            if str(depid) not in deplist:
-                task.dependencies += str(depid) + ','
-
+                taskdep.parents += str(task.id) + ','
+                deplist = task.dependencies.split(',')
+                if str(depid) not in deplist:
+                    task.dependencies += str(depid) + ','
+                    
     db.SESSION.commit()
     send_message("Task {} dependencies up to date".format(task.id), chat)
 
@@ -321,15 +326,15 @@ def prioritize_task(msg, chat):
         send_message("_Cleared_ all priorities from task {}"
                      .format(task.id), chat)
     else:
-          if text.lower() not in ['high', 'medium', 'low']:
-              send_message("""
-                              The priority *must be* one of the following:
-                              high, medium, low
-                           """, chat)
-          else:
-              task.priority = dict_priority(text.lower())
-              send_message("*Task {}* priority has priority *{}*"
-                           .format(task_id, text.lower()), chat)
+        if text.lower() not in ['high', 'medium', 'low']:
+            send_message("""
+                            The priority *must be* one of the following:
+                            high, medium, low
+                        """, chat)
+        else:
+            task.priority = dict_priority(text.lower())
+            send_message("*Task {}* priority has priority *{}*"
+                        .format(task.id, text.lower()), chat)
         db.SESSION.commit()
 
         
