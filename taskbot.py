@@ -336,19 +336,19 @@ def depend_on_task(msg, chat):
                 querry = db.SESSION.query(Task).filter_by(id=i, chat=chat)
                 item = querry.one()
                 item.parents = item.parents.replace('{},'.format(task.id), '')
-            print(task.dependencies)
             task.dependencies = ''
             send_message("Dependencies removed from task {}".format(task_id),
                          chat)
         else:
             for depid in text.split(' '):
-                if str(depid) in task.parents.split(',')[:-1]:
-                    send_message("Circular dependency in {}".format(depid), chat)
-                elif not depid.isdigit():
+                if not depid.isdigit():
                     send_message("""
                                     All dependencies ids must be numeric,
                                     and not {}
                                  """.format(depid), chat)
+                elif str(depid) in task.parents.split(',')[:-1]:
+                    send_message("Circular dependency, task {} depends on a task {}"
+                                .format(depid, task_id), chat)
                 else:
                     depid = int(depid)
                     query = (db.SESSION
