@@ -329,20 +329,22 @@ def depend_on_task(msg, chat):
         except sqlalchemy.orm.exc.NoResultFound:
             send_message("_404_ Task {} not found x.x".format(task_id), chat)
             return
-
+        
         if text == '':
             for i in task.dependencies.split(',')[:-1]:
                 i = int(i)
                 querry = db.SESSION.query(Task).filter_by(id=i, chat=chat)
                 item = querry.one()
                 item.parents = item.parents.replace('{},'.format(task.id), '')
-
+            print(task.dependencies)
             task.dependencies = ''
             send_message("Dependencies removed from task {}".format(task_id),
                          chat)
         else:
             for depid in text.split(' '):
-                if not depid.isdigit():
+                if str(depid) in task.parents.split(',')[:-1]:
+                    send_message("Circular dependency in {}".format(depid), chat)
+                elif not depid.isdigit():
                     send_message("""
                                     All dependencies ids must be numeric,
                                     and not {}
