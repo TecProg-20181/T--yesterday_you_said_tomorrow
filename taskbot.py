@@ -264,6 +264,21 @@ def list_tasks(chat, order):
     send_message(msg, chat)
 
 
+def circular_dependency(task_id, depid, chat):
+    """checks if link the task with a circular dependency
+       will cause some circular dependency deadlock"""
+    try:
+        task = get_task(str(task_id), chat)
+    except MessageException:
+        return True
+    if str(depid) in task.parents.split(',')[:-1]:
+        return True
+    for i in task.parents.split(',')[:-1]:
+        if circular_dependency(i, depid, chat):
+            return True
+    return False
+
+
 def depend_on_task(msg, chat):
     """set dependencies of the task"""
     text = ''
@@ -289,7 +304,9 @@ def depend_on_task(msg, chat):
                      chat)
     else:
         for depid in text.split(' '):
-            if str(depid) in task.parents.split(',')[:-1]:
+            if task.id == int(depid):
+                send_message("Invalid task: {}".format(depid), chat)
+            elif circular_dependency(task.id, depid, chat):
                 send_message("Circular dependency, task {} depends on a task {}"
                              .format(depid, task.id), chat)
                 continue
@@ -303,7 +320,7 @@ def depend_on_task(msg, chat):
                 deplist = task.dependencies.split(',')
                 if str(depid) not in deplist:
                     task.dependencies += str(depid) + ','
-                    
+
     db.SESSION.commit()
     send_message("Task {} dependencies up to date".format(task.id), chat)
 
@@ -334,10 +351,10 @@ def prioritize_task(msg, chat):
         else:
             task.priority = dict_priority(text.lower())
             send_message("*Task {}* priority has priority *{}*"
-                        .format(task.id, text.lower()), chat)
+                         .format(task.id, text.lower()), chat)
         db.SESSION.commit()
 
-        
+
 def get_message(update):
     """return the message catched by update"""
     if 'message' in update:
@@ -351,6 +368,7 @@ def get_message(update):
 
 
 def dict_priority(priority):
+    """translate priority by the following dictionary"""
     return {
         'high': '1',
         'medium': '2',
