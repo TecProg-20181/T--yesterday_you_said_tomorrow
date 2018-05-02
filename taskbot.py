@@ -495,6 +495,7 @@ def handle_updates(updates, chat_bot):
 
 
 def chat_bot_start():
+    """start the module to chat with the bot"""
     os.chdir("english/")
     files = os.listdir(os.getcwd())
 
