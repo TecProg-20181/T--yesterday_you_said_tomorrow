@@ -1,3 +1,6 @@
 sqlalchemy
 requests
 chatterbot
+sklearn
+pandas
+scipy
