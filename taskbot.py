@@ -149,10 +149,8 @@ def new_task(name, chat):
 def rename_task(msg, chat):
     """rename a task by id"""
     text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+    msg = split_message(msg)
+
     try:
         task = get_task(msg, chat)
     except MessageException:
@@ -269,10 +267,8 @@ def list_tasks(chat, order):
 def depend_on_task(msg, chat):
     """set dependencies of the task"""
     text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+    msg = split_message(msg)
+
 
     try:
         task = get_task(msg, chat)
@@ -310,13 +306,19 @@ def depend_on_task(msg, chat):
     send_message("Task {} dependencies up to date".format(task.id), chat)
 
 
-def prioritize_task(msg, chat):
-    """set the priority of given task"""
-    text = ''
+def split_message(msg):
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
+    return msg
+
+
+def prioritize_task(msg, chat):
+    """set the priority of given task"""
+    text = ''
+
+    msg = split_message(msg)
 
     try:
         task = get_task(msg, chat)
@@ -343,10 +345,8 @@ def prioritize_task(msg, chat):
 def duedate_task(msg, chat):
     """set the priority of given task"""
     text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+    msg = split_message(msg)
+
 
     try:
         task = get_task(msg, chat)
@@ -355,8 +355,8 @@ def duedate_task(msg, chat):
 
     if text == '':
         task.duedate = ''
-        send_message("_Cleared_ all duedate from task {}"
-                     .format(task.duedate), chat)
+        send_message("_Cleared_ duedate from task {}"
+                     .format(task.name), chat)
     else:
         if validate_date(text, chat) is True:
             task.duedate = text
