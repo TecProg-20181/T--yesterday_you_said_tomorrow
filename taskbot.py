@@ -304,7 +304,9 @@ def depend_on_task(msg, chat):
                      chat)
     else:
         for depid in text.split(' '):
-            if circular_dependency(task.id, depid, chat):
+            if task.id == int(depid):
+                send_message("Invalid task: {}".format(depid), chat)
+            elif circular_dependency(task.id, depid, chat):
                 send_message("Circular dependency, task {} depends on a task {}"
                              .format(depid, task.id), chat)
                 continue
