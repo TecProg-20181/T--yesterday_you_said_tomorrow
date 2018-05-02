@@ -489,7 +489,9 @@ def handle_updates(updates, chat_bot):
             response = chat_bot.predict([message['text']])
             print(response)
             print(message['text'])
-            send_message(str(response), chat)
+            response = str(response)
+            print(response)
+            send_message(response[2:-2], chat)
 
 
 def chat_bot_start():
