@@ -352,20 +352,20 @@ def prioritize_task(msg, chat):
 
 
 def duedate_task(msg, chat):
-    text = ''
     """set the priority of given task"""
+    text = ''
     msg = split_message(msg)
 
 
     try:
-    except MessageException:
         task = get_task(msg, chat)
+    except MessageException:
         return
-    if text == '':
 
+    if text == '':
         task.duedate = ''
-                     .format(task.name), chat)
         send_message("_Cleared_ duedate from task {}"
+                     .format(task.name), chat)
     else:
         if validate_date(text, chat) is True:
             task.duedate = text
@@ -383,10 +383,10 @@ def validate_date(text, chat):
                              """, chat)
         return
 
-    return True
-        return False
-        send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
     if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
+        send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
+        return False
+    return True
 
 
 def get_message(update):
