@@ -263,6 +263,17 @@ def list_tasks(chat, order):
 
     send_message(msg, chat)
 
+def circular_dependency(id, depid, chat):
+    try:
+        task = get_task(str(id), chat)
+    except MessageException:
+        return
+    if str(depid) in task.parents.split(',')[:-1]:
+        return True
+    for i in task.parents.split(',')[:-1]:
+        if circular_dependency(i, depid, chat):
+            return True
+    return False
 
 def depend_on_task(msg, chat):
     """set dependencies of the task"""
@@ -289,7 +300,7 @@ def depend_on_task(msg, chat):
                      chat)
     else:
         for depid in text.split(' '):
-            if str(depid) in task.parents.split(',')[:-1]:
+            if circular_dependency(task.id, depid, chat):
                 send_message("Circular dependency, task {} depends on a task {}"
                              .format(depid, task.id), chat)
                 continue
