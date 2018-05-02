@@ -1,1 +1,2 @@
-web: python taskbot.py
+bot: python taskbot.py
+
