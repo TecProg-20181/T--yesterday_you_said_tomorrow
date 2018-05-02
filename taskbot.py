@@ -140,7 +140,7 @@ def new_task(name, chat):
 def rename_task(msg, chat):
     """rename a task by id"""
     text = ''
-    msg = split_message(msg)
+    msg, text = split_message(msg)
 
     try:
         task = get_task(msg, chat)
@@ -274,7 +274,7 @@ def circular_dependency(task_id, depid, chat):
 def depend_on_task(msg, chat):
     """set dependencies of the task"""
     text = ''
-    msg = split_message(msg)
+    msg, text = split_message(msg)
 
 
     try:
@@ -316,18 +316,19 @@ def depend_on_task(msg, chat):
 
 
 def split_message(msg):
+    text = ''
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
-    return msg
+    return msg, text
 
 
 def prioritize_task(msg, chat):
     """set the priority of given task"""
     text = ''
 
-    msg = split_message(msg)
+    msg, text = split_message(msg)
 
     try:
         task = get_task(msg, chat)
@@ -354,7 +355,8 @@ def prioritize_task(msg, chat):
 def duedate_task(msg, chat):
     """set the priority of given task"""
     text = ''
-    msg = split_message(msg)
+    msg, text = split_message(msg)
+    print(msg)
 
 
     try:
