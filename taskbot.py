@@ -1,12 +1,3 @@
-"""
-    Main code of Taskbot
-    Generate a token from BotFather and make the following command at
-        the terminal:
-    export BOT_API_TOKEN="<your token here>"
-    then, call python3 taskbot.py and voila, your bot is now running
-"""
-#!/usr/bin/env python3
-
 import os
 import time
 import urllib
@@ -14,6 +5,7 @@ import json
 import requests
 import sqlalchemy
 import db
+import datetime
 from db import Task
 
 TOKEN = os.environ['BOT_API_TOKEN']
@@ -33,6 +25,7 @@ HELP = """
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
+ /duedate ID DATE{YYYY-MM-DD}
  /help
 """
 
@@ -147,10 +140,8 @@ def new_task(name, chat):
 def rename_task(msg, chat):
     """rename a task by id"""
     text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+    msg = split_message(msg)
+
     try:
         task = get_task(msg, chat)
     except MessageException:
@@ -231,6 +222,7 @@ def list_tasks(chat, order):
         msg += deps_text(task, chat)
 
     send_message(msg, chat)
+
     msg = ''
 
     msg += '\U0001F4DD _Status_\n'
@@ -242,7 +234,7 @@ def list_tasks(chat, order):
     msg += '\n\U0001F195 *TODO*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
+        msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, dict_priority(task.priority), task.duedate)
 
     query = (db.SESSION
              .query(Task)
@@ -251,7 +243,7 @@ def list_tasks(chat, order):
     msg += '\n\U000023FA *DOING*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
+        msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, dict_priority(task.priority), task.duedate)
     query = (db.SESSION
              .query(Task)
              .filter_by(status='DONE', chat=chat)
@@ -259,7 +251,7 @@ def list_tasks(chat, order):
     msg += '\n\U00002611 *DONE*\n'
 
     for task in query.all():
-        msg += '[[{}]] {} {}\n'.format(task.id, task.name, dict_priority(task.priority))
+        msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, dict_priority(task.priority), task.duedate)
 
     send_message(msg, chat)
 
@@ -282,10 +274,8 @@ def circular_dependency(task_id, depid, chat):
 def depend_on_task(msg, chat):
     """set dependencies of the task"""
     text = ''
-    if msg != '':
-        if len(msg.split(' ', 1)) > 1:
-            text = msg.split(' ', 1)[1]
-        msg = msg.split(' ', 1)[0]
+    msg = split_message(msg)
+
 
     try:
         task = get_task(msg, chat)
@@ -325,13 +315,19 @@ def depend_on_task(msg, chat):
     send_message("Task {} dependencies up to date".format(task.id), chat)
 
 
-def prioritize_task(msg, chat):
-    """set the priority of given task"""
-    text = ''
+def split_message(msg):
     if msg != '':
         if len(msg.split(' ', 1)) > 1:
             text = msg.split(' ', 1)[1]
         msg = msg.split(' ', 1)[0]
+    return msg
+
+
+def prioritize_task(msg, chat):
+    """set the priority of given task"""
+    text = ''
+
+    msg = split_message(msg)
 
     try:
         task = get_task(msg, chat)
@@ -353,6 +349,44 @@ def prioritize_task(msg, chat):
             send_message("*Task {}* priority has priority *{}*"
                          .format(task.id, text.lower()), chat)
         db.SESSION.commit()
+
+
+def duedate_task(msg, chat):
+    text = ''
+    """set the priority of given task"""
+    msg = split_message(msg)
+
+
+    try:
+    except MessageException:
+        task = get_task(msg, chat)
+        return
+    if text == '':
+
+        task.duedate = ''
+                     .format(task.name), chat)
+        send_message("_Cleared_ duedate from task {}"
+    else:
+        if validate_date(text, chat) is True:
+            task.duedate = text
+            send_message("*Task {}* duedate is *{}*"
+                         .format(task.id, text), chat)
+    db.SESSION.commit()
+
+
+def validate_date(text, chat):
+    try:
+        datetime.datetime.strptime(text, '%Y-%m-%d')
+    except ValueError:
+        send_message("""
+                                 Incorrect data format, should be YYYY-MM-DD
+                             """, chat)
+        return
+
+    return True
+        return False
+        send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
+    if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
 
 
 def get_message(update):
@@ -430,6 +464,9 @@ def handle_updates(updates):
 
         elif command == '/priority':
             prioritize_task(msg, chat)
+
+        elif command == '/duedate':
+            duedate_task(msg, chat)
 
         elif command == '/start':
             send_message("Welcome! Here is a list of things you can do.", chat)
