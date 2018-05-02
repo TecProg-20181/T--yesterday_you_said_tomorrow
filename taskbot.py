@@ -6,7 +6,14 @@ import requests
 import sqlalchemy
 import db
 import datetime
+import pandas
+import yaml
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
 from db import Task
+from sklearn.linear_model import SGDClassifier
+
 
 TOKEN = os.environ['BOT_API_TOKEN']
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
@@ -415,7 +422,7 @@ def dict_priority(priority):
     }[priority]
 
 
-def handle_updates(updates):
+def handle_updates(updates, chat_bot):
     """read the user command and calls the property methods"""
     for update in updates["result"]:
         try:
@@ -479,21 +486,50 @@ def handle_updates(updates):
             send_message(HELP, chat)
 
         else:
-            send_message("I'm sorry " + str(message['chat']['first_name']) +
-                         ". I'm afraid I can't do that.", chat)
+            response = chat_bot.predict([message['text']])
+            print(response)
+            print(message['text'])
+            send_message(str(response), chat)
+
+
+def chat_bot_start():
+    os.chdir("english/")
+    files = os.listdir(os.getcwd())
+
+    text_clf = Pipeline([('vect', CountVectorizer()),
+                         ('tfidf', TfidfTransformer()),
+                         ('clf', SGDClassifier(loss='hinge', penalty='l2',
+                                               alpha=1e-3, random_state=42,
+                                               max_iter=5, tol=None)),
+                         ])
+    readX = []
+    readY = []
+    for file in files:
+        print(file)
+        with open(file, 'r') as stream:
+            dict = yaml.load(stream)
+
+        jsonDump = json.dumps(dict, indent=4, sort_keys=True)
+
+        read = pandas.read_json(jsonDump)
+        readX.extend(read[0])
+        readY.extend(read[1])
+
+    text_clf.fit(readX, readY)
+    return text_clf
 
 
 def main():
     """get updates continuosly and manage instructions"""
     last_update_id = None
-
+    chat_bot = chat_bot_start()
     while True:
         print("Updates")
         updates = get_updates(last_update_id)
 
         if updates["result"]:
             last_update_id = get_last_update_id(updates) + 1
-            handle_updates(updates)
+            handle_updates(updates, chat_bot)
 
         time.sleep(0.5)
 
