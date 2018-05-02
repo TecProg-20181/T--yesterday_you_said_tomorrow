@@ -34,7 +34,7 @@ HELP = """
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
- /duedate ID DATE{10-04-2017}
+ /duedate ID DATE{YYYY-MM-DD}
  /help
 """
 
@@ -358,21 +358,26 @@ def duedate_task(msg, chat):
         send_message("_Cleared_ all duedate from task {}"
                      .format(task.duedate), chat)
     else:
-        if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
-            send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
-        else:
-            try:
-                datetime.datetime.strptime(text, '%d-%m-%Y')
-            except ValueError:
-                send_message("""
-                                       Incorrect data format, should be DD-MM-YYYY
-                                   """, chat)
-                return
-
+        if validate_date(text, chat) is True:
             task.duedate = text
             send_message("*Task {}* duedate is *{}*"
                          .format(task.id, text), chat)
     db.SESSION.commit()
+
+
+def validate_date(text, chat):
+    try:
+        datetime.datetime.strptime(text, '%Y-%m-%d')
+    except ValueError:
+        send_message("""
+                                 Incorrect data format, should be YYYY-MM-DD
+                             """, chat)
+        return
+
+    if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
+        send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
+        return False
+    return True
 
 def get_message(update):
     """return the message catched by update"""
