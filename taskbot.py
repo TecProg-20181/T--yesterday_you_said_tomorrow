@@ -6,7 +6,9 @@ import requests
 import sqlalchemy
 import db
 import datetime
+
 from db import Task
+from chatterbot import ChatBot
 
 TOKEN = os.environ['BOT_API_TOKEN']
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
@@ -413,7 +415,7 @@ def dict_priority(priority):
     }[priority]
 
 
-def handle_updates(updates):
+def handle_updates(updates, chatbot):
     """read the user command and calls the property methods"""
     for update in updates["result"]:
         try:
@@ -477,21 +479,39 @@ def handle_updates(updates):
             send_message(HELP, chat)
 
         else:
-            send_message("I'm sorry " + str(message['chat']['first_name']) +
-                         ". I'm afraid I can't do that.", chat)
+            response = chatbot.get_response(msg)
+            send_message(response, chat)
+
+
+def chatBotStart():
+    chatbot = ChatBot(
+        'Ron Obvious',
+        trainer='chatterbot.trainers.ChatterBotCorpusTrainer'
+    )
+
+    # Train based on the english corpus
+    chatbot.train("chatterbot.corpus.english")
+
+    # Train based on english greetings corpus
+    chatbot.train("chatterbot.corpus.english.greetings")
+
+    # Train based on the english conversations corpus
+    chatbot.train("chatterbot.corpus.english.conversations")
+
+    return chatbot
 
 
 def main():
     """get updates continuosly and manage instructions"""
     last_update_id = None
-
+    chatbot = chatBotStart()
     while True:
         print("Updates")
         updates = get_updates(last_update_id)
 
         if updates["result"]:
             last_update_id = get_last_update_id(updates) + 1
-            handle_updates(updates)
+            handle_updates(updates, chatbot)
 
         time.sleep(0.5)
 
