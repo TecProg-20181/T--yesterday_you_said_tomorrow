@@ -1,12 +1,3 @@
-"""
-    Main code of Taskbot
-    Generate a token from BotFather and make the following command at
-        the terminal:
-    export BOT_API_TOKEN="<your token here>"
-    then, call python3 taskbot.py and voila, your bot is now running
-"""
-#!/usr/bin/env python3
-
 import os
 import time
 import urllib
@@ -231,6 +222,7 @@ def list_tasks(chat, order):
         msg += deps_text(task, chat)
 
     send_message(msg, chat)
+
     msg = ''
 
     msg += '\U0001F4DD _Status_\n'
@@ -379,6 +371,7 @@ def validate_date(text, chat):
         return False
     return True
 
+
 def get_message(update):
     """return the message catched by update"""
     if 'message' in update:
@@ -456,7 +449,6 @@ def handle_updates(updates):
 
         elif command == '/duedate':
             duedate_task(msg, chat)
-
 
         elif command == '/start':
             send_message("Welcome! Here is a list of things you can do.", chat)
