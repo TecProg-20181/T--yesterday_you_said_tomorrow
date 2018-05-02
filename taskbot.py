@@ -6,9 +6,14 @@ import requests
 import sqlalchemy
 import db
 import datetime
-
+import pandas
+import yaml
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
 from db import Task
-from chatterbot import ChatBot
+from sklearn.naive_bayes import MultinomialNB
+
 
 TOKEN = os.environ['BOT_API_TOKEN']
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
@@ -415,7 +420,7 @@ def dict_priority(priority):
     }[priority]
 
 
-def handle_updates(updates, chatbot):
+def handle_updates(updates, chat_bot):
     """read the user command and calls the property methods"""
     for update in updates["result"]:
         try:
@@ -479,39 +484,48 @@ def handle_updates(updates, chatbot):
             send_message(HELP, chat)
 
         else:
-            response = chatbot.get_response(msg)
-            send_message(response, chat)
+            response = chat_bot.predict([message['text']])
+            print(response)
+            print(message['text'])
+            send_message(str(response), chat)
 
 
-def chatBotStart():
-    chatbot = ChatBot(
-        'Ron Obvious',
-        trainer='chatterbot.trainers.ChatterBotCorpusTrainer'
-    )
+def chat_bot_start():
+    os.chdir("english/")
+    files = os.listdir(os.getcwd())
 
-    # Train based on the english corpus
-    chatbot.train("chatterbot.corpus.english")
+    text_clf = Pipeline([('vect', CountVectorizer()),
+                         ('tfidf', TfidfTransformer()),
+                         ('clf', MultinomialNB()),
+                         ])
+    readX = []
+    readY = []
+    for file in files:
+        print(file)
+        with open(file, 'r') as stream:
+            dict = yaml.load(stream)
 
-    # Train based on english greetings corpus
-    chatbot.train("chatterbot.corpus.english.greetings")
+        jsonDump = json.dumps(dict, indent=4, sort_keys=True)
 
-    # Train based on the english conversations corpus
-    chatbot.train("chatterbot.corpus.english.conversations")
+        read = pandas.read_json(jsonDump)
+        readX.extend(read[0])
+        readY.extend(read[1])
 
-    return chatbot
+    text_clf.fit(readX, readY)
+    return text_clf
 
 
 def main():
     """get updates continuosly and manage instructions"""
     last_update_id = None
-    chatbot = chatBotStart()
+    chat_bot = chat_bot_start()
     while True:
         print("Updates")
         updates = get_updates(last_update_id)
 
         if updates["result"]:
             last_update_id = get_last_update_id(updates) + 1
-            handle_updates(updates, chatbot)
+            handle_updates(updates, chat_bot)
 
         time.sleep(0.5)
 
