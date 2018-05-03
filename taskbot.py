@@ -14,21 +14,24 @@ from sklearn.feature_extraction.text import CountVectorizer
 from db import Task
 from sklearn.linear_model import SGDClassifier
 
-
 TOKEN = os.environ['BOT_API_TOKEN']
-URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_TELEGRAM = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_GITHUB = "https://api.github.com/repos/TecProg-20181/T--yesterday_you_said_tomorrow/issues"
 
 TODO = 'TODO'
 DOING = 'DOING'
 DONE = 'DONE'
 HELP = """
+ /newIssue NOME
  /new NOME
  /todo ID
  /doing ID
  /done ID
  /delete ID
  /list{I (list by id), P (list by priority)}
+ /listIssues
  /rename ID NOME
+ /renameIssue ID NOME
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
@@ -58,7 +61,7 @@ def get_json_from_url(url):
 
 def get_updates(offset=None):
     """request new information from API"""
-    url = URL + "getUpdates?timeout=100"
+    url = URL_TELEGRAM + "getUpdates?timeout=100"
     if offset:
         url += "&offset={}".format(offset)
     payload = get_json_from_url(url)
@@ -68,7 +71,7 @@ def get_updates(offset=None):
 def send_message(text, chat_id, reply_markup=None):
     """send message to the user"""
     text = urllib.parse.quote_plus(text)
-    url = URL + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
+    url = URL_TELEGRAM + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
                  .format(text, chat_id))
     if reply_markup:
         url += "&reply_markup={}".format(reply_markup)
@@ -142,6 +145,55 @@ def new_task(name, chat):
     db.SESSION.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
     return task
+
+
+def new_issue(name, chat):
+    """Create an Issue"""
+    payload = "{\n  \"title\": \""+name+"\",\n  \"labels\": [\n    \"telegram\"\n  ]\n}"
+    print(payload)
+    headers = {
+        'Content-Type': "application/json",
+        'Authorization': "Basic WWVzdGVyZGF5WW91U2FpZFRvbW9ycm93Qm90Olllc3RlcmRheVlvdVNhaWRUb21vcnJvdw==",
+        'Cache-Control': "no-cache",
+        'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
+    }
+
+    response = requests.request("POST", URL_GITHUB, data=payload, headers=headers)
+
+    print(response.text)
+
+    return send_message("New Issue created {}".format(name), chat)
+
+
+def rename_issue(msg, chat):
+    """rename a task by id"""
+    text = ''
+    msg, text = split_message(msg)
+
+    if text == '':
+        send_message("""
+                      You want to modify the issue {},
+                      but you didn't provide any new text
+                     """.format(msg), chat)
+        return
+
+    payload = "{\n  \"title\": \""+text+"\",\n  \"labels\": [\n    \"telegram\"\n  ]\n}"
+    print(payload)
+    headers = {
+        'Content-Type': "application/json",
+        'Authorization': "Basic WWVzdGVyZGF5WW91U2FpZFRvbW9ycm93Qm90Olllc3RlcmRheVlvdVNhaWRUb21vcnJvdw==",
+        'Cache-Control': "no-cache",
+        'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
+    }
+    result = requests.request("GET", URL_GITHUB + msg)
+
+    try:
+        result['message']
+    except:
+        send_message("Issue does not exist", chat)
+
+    response = requests.request("POST", URL_GITHUB+'/'+msg, data=payload, headers=headers)
+    return send_message("Issue renamed {}".format(text), chat)
 
 
 def rename_task(msg, chat):
@@ -259,6 +311,17 @@ def list_tasks(chat, order):
 
     for task in query.all():
         msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, dict_priority(task.priority), task.duedate)
+
+    send_message(msg, chat)
+
+
+def list_issues(chat):
+    """lists all the issues active in the T--yesterday_you_said_tomorrow repo"""
+    issues = get_json_from_url(URL_GITHUB)
+    msg = ''
+    msg += '\U0001F4CB Issues List\n\n'
+    for aux in issues:
+        msg += aux['title'] + '\n\n'
 
     send_message(msg, chat)
 
@@ -442,6 +505,12 @@ def handle_updates(updates, chat_bot):
         if command == '/new':
             new_task(msg, chat)
 
+        elif command == '/newIssue':
+            new_issue(msg, chat)
+
+        elif command == '/renameIssue':
+            rename_issue(msg, chat)
+
         elif command == '/rename':
             rename_task(msg, chat)
 
@@ -467,6 +536,9 @@ def handle_updates(updates, chat_bot):
         elif command == '/listI':
             order = Task.id
             list_tasks(chat, order)
+
+        elif command == '/listIssues':
+            list_issues(chat)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
@@ -495,6 +567,7 @@ def handle_updates(updates, chat_bot):
 
 
 def chat_bot_start():
+    """start the module to chat with the bot"""
     os.chdir("english/")
     files = os.listdir(os.getcwd())
 
