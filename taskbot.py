@@ -14,7 +14,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 from db import Task
 from sklearn.linear_model import SGDClassifier
 
-
 TOKEN = os.environ['BOT_API_TOKEN']
 URL_TELEGRAM = "https://api.telegram.org/bot{}/".format(TOKEN)
 URL_GITHUB = "https://api.github.com/repos/TecProg-20181/T--yesterday_you_said_tomorrow/issues"
@@ -23,19 +22,20 @@ TODO = 'TODO'
 DOING = 'DOING'
 DONE = 'DONE'
 HELP = """
+ /newIssue NOME
  /new NOME
  /todo ID
  /doing ID
  /done ID
  /delete ID
  /list{I (list by id), P (list by priority)}
+ /listIssues
  /rename ID NOME
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
  /duedate ID DATE{YYYY-MM-DD}
  /help
- /listIssues
 """
 
 
@@ -144,6 +144,24 @@ def new_task(name, chat):
     db.SESSION.commit()
     send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
     return task
+
+
+def new_issue(name, chat):
+    """Create an Issue"""
+    payload = "{\n  \"title\": \""+name+"\",\n  \"labels\": [\n    \"telegram\"\n  ]\n}"
+    print(payload)
+    headers = {
+        'Content-Type': "application/json",
+        'Authorization': "Basic WWVzdGVyZGF5WW91U2FpZFRvbW9ycm93Qm90Olllc3RlcmRheVlvdVNhaWRUb21vcnJvdw==",
+        'Cache-Control': "no-cache",
+        'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
+    }
+
+    response = requests.request("POST", URL_GITHUB, data=payload, headers=headers)
+
+    print(response.text)
+
+    return send_message("New Issue created {}".format(name), chat)
 
 
 def rename_task(msg, chat):
@@ -454,6 +472,9 @@ def handle_updates(updates, chat_bot):
 
         if command == '/new':
             new_task(msg, chat)
+
+        if command == '/newIssue':
+            new_issue(msg, chat)
 
         elif command == '/rename':
             rename_task(msg, chat)
