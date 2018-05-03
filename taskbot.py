@@ -16,7 +16,8 @@ from sklearn.linear_model import SGDClassifier
 
 
 TOKEN = os.environ['BOT_API_TOKEN']
-URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_TELEGRAM = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_GITHUB = "https://api.github.com/repos/TecProg-20181/T--yesterday_you_said_tomorrow/issues"
 
 TODO = 'TODO'
 DOING = 'DOING'
@@ -34,6 +35,7 @@ HELP = """
  /priority ID PRIORITY{low, medium, high}
  /duedate ID DATE{YYYY-MM-DD}
  /help
+ /listIssues
 """
 
 
@@ -58,7 +60,7 @@ def get_json_from_url(url):
 
 def get_updates(offset=None):
     """request new information from API"""
-    url = URL + "getUpdates?timeout=100"
+    url = URL_TELEGRAM + "getUpdates?timeout=100"
     if offset:
         url += "&offset={}".format(offset)
     payload = get_json_from_url(url)
@@ -68,7 +70,7 @@ def get_updates(offset=None):
 def send_message(text, chat_id, reply_markup=None):
     """send message to the user"""
     text = urllib.parse.quote_plus(text)
-    url = URL + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
+    url = URL_TELEGRAM + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
                  .format(text, chat_id))
     if reply_markup:
         url += "&reply_markup={}".format(reply_markup)
@@ -259,6 +261,17 @@ def list_tasks(chat, order):
 
     for task in query.all():
         msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, dict_priority(task.priority), task.duedate)
+
+    send_message(msg, chat)
+
+
+def list_issues(chat):
+    """lists all the issues active in the T--yesterday_you_said_tomorrow repo"""
+    issues = get_json_from_url(URL_GITHUB)
+    msg = ''
+    msg += '\U0001F4CB Issues List\n\n'
+    for aux in issues:
+        msg += aux['title'] + '\n\n'
 
     send_message(msg, chat)
 
@@ -467,6 +480,9 @@ def handle_updates(updates, chat_bot):
         elif command == '/listI':
             order = Task.id
             list_tasks(chat, order)
+
+        elif command == '/listIssues':
+            list_issues(chat)
 
         elif command == '/dependson':
             depend_on_task(msg, chat)
