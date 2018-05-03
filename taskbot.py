@@ -31,6 +31,7 @@ HELP = """
  /list{I (list by id), P (list by priority)}
  /listIssues
  /rename ID NOME
+ /renameIssue ID NOME
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
@@ -162,6 +163,37 @@ def new_issue(name, chat):
     print(response.text)
 
     return send_message("New Issue created {}".format(name), chat)
+
+
+def rename_issue(msg, chat):
+    """rename a task by id"""
+    text = ''
+    msg, text = split_message(msg)
+
+    if text == '':
+        send_message("""
+                      You want to modify the issue {},
+                      but you didn't provide any new text
+                     """.format(msg), chat)
+        return
+
+    payload = "{\n  \"title\": \""+text+"\",\n  \"labels\": [\n    \"telegram\"\n  ]\n}"
+    print(payload)
+    headers = {
+        'Content-Type': "application/json",
+        'Authorization': "Basic WWVzdGVyZGF5WW91U2FpZFRvbW9ycm93Qm90Olllc3RlcmRheVlvdVNhaWRUb21vcnJvdw==",
+        'Cache-Control': "no-cache",
+        'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
+    }
+    result = requests.request("GET", URL_GITHUB + msg)
+
+    try:
+        result['message']
+    except:
+        send_message("Issue does not exist", chat)
+
+    response = requests.request("POST", URL_GITHUB+'/'+msg, data=payload, headers=headers)
+    return send_message("Issue renamed {}".format(text), chat)
 
 
 def rename_task(msg, chat):
@@ -473,8 +505,11 @@ def handle_updates(updates, chat_bot):
         if command == '/new':
             new_task(msg, chat)
 
-        if command == '/newIssue':
+        elif command == '/newIssue':
             new_issue(msg, chat)
+
+        elif command == '/renameIssue':
+            rename_issue(msg, chat)
 
         elif command == '/rename':
             rename_task(msg, chat)
