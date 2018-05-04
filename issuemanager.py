@@ -51,12 +51,13 @@ class IssueManager:
             'Cache-Control': "no-cache",
             'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
         }
-        result = requests.request("GET", constants.URL_GITHUB + msg)
-
+        result = requests.request("GET", constants.URL_GITHUB + '/' + msg)
+        result_json = result.json()
+        print(result_json)
         try:
-            result['message']
+            result_json['state']
         except:
-            self.url_handler.send_message("Issue does not exist", chat)
+            return self.url_handler.send_message("Issue does not exist", chat)
 
         requests.request("POST", constants.URL_GITHUB+'/'+msg, data=payload, headers=headers)
         return self.url_handler.send_message("Issue renamed {}".format(text), chat)
