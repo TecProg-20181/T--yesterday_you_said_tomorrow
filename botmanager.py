@@ -23,8 +23,10 @@ class BotManager:
                 message = self.url_handler.get_message(update)
             except MessageException:
                 return
-
-            command = message["text"].split(" ", 1)[0]
+            try:
+                command = message["text"].split(" ", 1)[0]
+            except:
+                return
             msg = ''
             if len(message["text"].split(" ", 1)) > 1:
                 msg = message["text"].split(" ", 1)[1].strip()
