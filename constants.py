@@ -5,7 +5,8 @@
 import os
 
 TOKEN = os.environ['BOT_API_TOKEN']
-URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_TELEGRAM = "https://api.telegram.org/bot{}/".format(TOKEN)
+URL_GITHUB = "https://api.github.com/repos/TecProg-20181/T--yesterday_you_said_tomorrow/issues"
 
 TODO = 'TODO'
 DOING = 'DOING'

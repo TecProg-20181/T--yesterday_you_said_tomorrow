@@ -8,6 +8,8 @@ import db
 import datetime
 import pandas
 import yaml
+import constants
+
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -15,29 +17,6 @@ from db import Task
 from sklearn.linear_model import SGDClassifier
 
 TOKEN = os.environ['BOT_API_TOKEN']
-URL_TELEGRAM = "https://api.telegram.org/bot{}/".format(TOKEN)
-URL_GITHUB = "https://api.github.com/repos/TecProg-20181/T--yesterday_you_said_tomorrow/issues"
-
-TODO = 'TODO'
-DOING = 'DOING'
-DONE = 'DONE'
-HELP = """
- /newIssue NOME
- /new NOME
- /todo ID
- /doing ID
- /done ID
- /delete ID
- /list{I (list by id), P (list by priority)}
- /listIssues
- /rename ID NOME
- /renameIssue ID NOME
- /dependson ID ID...
- /duplicate ID
- /priority ID PRIORITY{low, medium, high}
- /duedate ID DATE{YYYY-MM-DD}
- /help
-"""
 
 
 class MessageException(Exception):
@@ -61,7 +40,7 @@ def get_json_from_url(url):
 
 def get_updates(offset=None):
     """request new information from API"""
-    url = URL_TELEGRAM + "getUpdates?timeout=100"
+    url = constants.URL_TELEGRAM + "getUpdates?timeout=100"
     if offset:
         url += "&offset={}".format(offset)
     payload = get_json_from_url(url)
@@ -71,7 +50,7 @@ def get_updates(offset=None):
 def send_message(text, chat_id, reply_markup=None):
     """send message to the user"""
     text = urllib.parse.quote_plus(text)
-    url = URL_TELEGRAM + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
+    url = constants.URL_TELEGRAM + ("sendMessage?text={}&chat_id={}&parse_mode=Markdown"
                  .format(text, chat_id))
     if reply_markup:
         url += "&reply_markup={}".format(reply_markup)
@@ -158,7 +137,7 @@ def new_issue(name, chat):
         'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
     }
 
-    response = requests.request("POST", URL_GITHUB, data=payload, headers=headers)
+    response = requests.request("POST", constants.URL_GITHUB, data=payload, headers=headers)
 
     print(response.text)
 
@@ -185,14 +164,14 @@ def rename_issue(msg, chat):
         'Cache-Control': "no-cache",
         'Postman-Token': "49817fa1-698d-496d-b6e3-252e81bc792f"
     }
-    result = requests.request("GET", URL_GITHUB + msg)
+    result = requests.request("GET", constants.URL_GITHUB + msg)
 
     try:
         result['message']
     except:
         send_message("Issue does not exist", chat)
 
-    response = requests.request("POST", URL_GITHUB+'/'+msg, data=payload, headers=headers)
+    response = requests.request("POST", constants.URL_GITHUB+'/'+msg, data=payload, headers=headers)
     return send_message("Issue renamed {}".format(text), chat)
 
 
@@ -324,7 +303,7 @@ def list_tasks(chat, order):
 
 def list_issues(chat):
     """lists all the issues active in the T--yesterday_you_said_tomorrow repo"""
-    issues = get_json_from_url(URL_GITHUB)
+    issues = get_json_from_url(constants.URL_GITHUB)
     msg = ''
     msg += '\U0001F4CB Issues List\n\n'
     for aux in issues:
@@ -528,13 +507,13 @@ def handle_updates(updates, chat_bot):
             delete_task(msg, chat)
 
         elif command == '/todo':
-            set_task_status(msg, chat, TODO)
+            set_task_status(msg, chat, constants.TODO)
 
         elif command == '/doing':
-            set_task_status(msg, chat, DOING)
+            set_task_status(msg, chat, constants.DOING)
 
         elif command == '/done':
-            set_task_status(msg, chat, DONE)
+            set_task_status(msg, chat, constants.DONE)
 
         elif command == '/listP':
             order = Task.priority
@@ -558,11 +537,11 @@ def handle_updates(updates, chat_bot):
 
         elif command == '/start':
             send_message("Welcome! Here is a list of things you can do.", chat)
-            send_message(HELP, chat)
+            send_message(constants.HELP, chat)
 
         elif command == '/help':
             send_message("Here is a list of things you can do.", chat)
-            send_message(HELP, chat)
+            send_message(constants.HELP, chat)
 
         else:
             response = chat_bot.predict([message['text']])
@@ -573,38 +552,40 @@ def handle_updates(updates, chat_bot):
             send_message(response[2:-2], chat)
 
 
-def chat_bot_start():
-    """start the module to chat with the bot"""
-    os.chdir("english/")
-    files = os.listdir(os.getcwd())
+class ChatBot:
+    @staticmethod
+    def chat_bot_start():
+        """start the module to chat with the bot"""
+        os.chdir("english/")
+        files = os.listdir(os.getcwd())
 
-    text_clf = Pipeline([('vect', CountVectorizer()),
-                         ('tfidf', TfidfTransformer()),
-                         ('clf', SGDClassifier(loss='hinge', penalty='l2',
-                                               alpha=1e-3, random_state=42,
-                                               max_iter=5, tol=None)),
-                         ])
-    readX = []
-    readY = []
-    for file in files:
-        print(file)
-        with open(file, 'r') as stream:
-            dict = yaml.load(stream)
+        text_clf = Pipeline([('vect', CountVectorizer()),
+                             ('tfidf', TfidfTransformer()),
+                             ('clf', SGDClassifier(loss='hinge', penalty='l2',
+                                                   alpha=1e-3, random_state=42,
+                                                   max_iter=5, tol=None)),
+                             ])
+        readX = []
+        readY = []
+        for file in files:
+            print(file)
+            with open(file, 'r') as stream:
+                dict = yaml.load(stream)
 
-        jsonDump = json.dumps(dict, indent=4, sort_keys=True)
+            jsonDump = json.dumps(dict, indent=4, sort_keys=True)
 
-        read = pandas.read_json(jsonDump)
-        readX.extend(read[0])
-        readY.extend(read[1])
+            read = pandas.read_json(jsonDump)
+            readX.extend(read[0])
+            readY.extend(read[1])
 
-    text_clf.fit(readX, readY)
-    return text_clf
+        text_clf.fit(readX, readY)
+        return text_clf
 
 
 def main():
     """get updates continuosly and manage instructions"""
     last_update_id = None
-    chat_bot = chat_bot_start()
+    chat_bot = ChatBot.chat_bot_start()
     while True:
         print("Updates")
         updates = get_updates(last_update_id)
