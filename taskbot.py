@@ -189,10 +189,10 @@ def delete_task(msg, chat):
         task = get_task(msg, chat)
     except MessageException:
         return
-    for item in task.dependencies.split(',')[:-1]:
+    for item in task.parents.split(',')[:-1]:
         querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
         item = querry.one()
-        item.parents = item.parents.replace('{},'.format(task.id), '')
+        item.dependencies = item.dependencies.replace('{},'.format(task.id), '')
     db.SESSION.delete(task)
     db.SESSION.commit()
     send_message("Task [[{}]] deleted".format(task.id), chat)
