@@ -13,12 +13,15 @@ DOING = 'DOING'
 DONE = 'DONE'
 HELP = """
  /new NOME
+ /newIssue NOME
  /todo ID
  /doing ID
  /done ID
  /delete ID
  /list{I (list by id), P (list by priority)}
+ /listIssues
  /rename ID NOME
+ /renameIssue ID NOME
  /dependson ID ID...
  /duplicate ID
  /priority ID PRIORITY{low, medium, high}
