@@ -10,7 +10,6 @@ from sklearn.linear_model import SGDClassifier
 
 
 class ChatBot:
-    @staticmethod
     def chat_bot_start():
         """start the module to chat with the bot"""
         os.chdir("english/")
