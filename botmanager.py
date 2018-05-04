@@ -24,10 +24,10 @@ class BotManager:
             except MessageException:
                 return
 
-            command = message["text"].split(" ", 1)[0]
+            command = message['text'].split(" ", 1)[0]
             msg = ''
-            if len(message["text"].split(" ", 1)) > 1:
-                msg = message["text"].split(" ", 1)[1].strip()
+            if len(message['text'].split(" ", 1)) > 1:
+                msg = message['text'].split(" ", 1)[1].strip()
 
             chat = message["chat"]["id"]
 
