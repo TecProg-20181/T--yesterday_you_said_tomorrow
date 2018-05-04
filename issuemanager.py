@@ -68,6 +68,6 @@ class IssueManager:
         msg = ''
         msg += '\U0001F4CB Issues List\n\n'
         for aux in issues:
-            msg += aux['title'] + '\n\n'
+            msg += "[[{}]] - {}\n\n".format(str(aux['number']), aux['title'])
 
         self.url_handler.send_message(msg, chat)
