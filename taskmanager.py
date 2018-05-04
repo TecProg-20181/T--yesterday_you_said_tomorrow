@@ -172,13 +172,12 @@ class TaskManager:
 
         msg += constants.STATUS_ICON + '_Status_\n'
 
-        status = ['TODO', 'DOING', 'DONE']
-        status_icon = [constants.NEW_ICON, constants.DOING_ICON, constants.DONE_ICON]
-        for status, status_icon in status, status_icon:
+        for status, status_icon in zip(['TODO', 'DOING', 'DONE'],
+                                       [constants.NEW_ICON, constants.DOING_ICON, constants.DONE_ICON]):
 
-            query = query(status, chat, order)
+            query_result = self.query(status, chat, order)
             msg += '\n'+ status_icon + '*' + status + '*\n'
-            for task in query.all():
+            for task in query_result.all():
                 msg += '[[{}]] {} {} {}\n'.format(task.id, task.name, self.dict_priority(task.priority), task.duedate)
 
         self.url_handler.send_message(msg, chat)
