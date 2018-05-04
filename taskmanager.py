@@ -75,24 +75,32 @@ class TaskManager:
     def rename_task(self, msg, chat):
         """rename a task by id"""
         msg, text = self.split_message(msg)
-
         try:
             task = self.get_task(msg, chat)
         except MessageException:
             return
+
+        if self.validate_rename_task(task, chat, text) is True:
+
+            old_text = task.name
+            task.name = text
+            db.SESSION.commit()
+            self.url_handler.send_message("""
+                          Task {} redefined from {} to {}
+                         """.format(task.id, old_text, text), chat)
+        else:
+            # NOTHING TO DO
+            pass
+
+    def validate_rename_task(self, task, chat, text):
+        """validate if it is possible to rename a task"""
         if text == '':
             self.url_handler.send_message("""
                           You want to modify task {},
                           but you didn't provide any new text
                          """.format(task.id), chat)
-            return
-
-        old_text = task.name
-        task.name = text
-        db.SESSION.commit()
-        self.url_handler.send_message("""
-                      Task {} redefined from {} to {}
-                     """.format(task.id, old_text, text), chat)
+            return False
+        return True
 
     def duplicate_task(self, msg, chat):
         """copy a task by id"""
@@ -181,7 +189,6 @@ class TaskManager:
                  .filter_by(status=status, chat=chat)
                  .order_by(order))
         return query
-
 
     def circular_dependency(self, task_id, depid, chat):
         """checks if link the task with a circular dependency
@@ -275,7 +282,6 @@ class TaskManager:
 
     def duedate_task(self, msg, chat):
         """set the priority of given task"""
-        text = ''
         msg, text = self.split_message(msg)
         print(msg)
 
