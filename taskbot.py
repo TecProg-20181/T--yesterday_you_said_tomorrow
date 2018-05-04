@@ -241,7 +241,14 @@ def delete_task(msg, chat):
         task = get_task(msg, chat)
     except MessageException:
         return
+    dependencies = []
     for item in task.dependencies.split(',')[:-1]:
+        dependencies.append(item)
+    for item in task.parents.split(',')[:-1]:
+        querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+        item = querry.one()
+        item.dependencies = item.dependencies.replace('{},'.format(task.id), '')
+    for item in dependencies:
         querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
         item = querry.one()
         item.parents = item.parents.replace('{},'.format(task.id), '')
