@@ -21,9 +21,6 @@ class BotManager:
         for update in updates["result"]:
             try:
                 message = self.url_handler.get_message(update)
-            except MessageException:
-                return
-            try:
                 command = message["text"].split(" ", 1)[0]
             except:
                 return
