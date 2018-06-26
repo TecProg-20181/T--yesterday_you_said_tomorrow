@@ -33,24 +33,26 @@ class BotManager:
 
             chat = message["chat"]["id"]
 
+            print('\n\n\n')
             print(command, msg, chat)
-
-            if command == '/new':
+            print('\n\n\n')
+            
+            if command == '/new' or command == '/n':
                 self.task_manager.new_task(msg, chat)
 
-            elif command == '/newIssue':
+            elif command == '/newIssue' or command == '/ni':
                 self.issue_manager.new_issue(msg, chat)
 
-            elif command == '/renameIssue':
+            elif command == '/renameIssue' or command == '/ri':
                 self.issue_manager.rename_issue(msg, chat)
 
-            elif command == '/rename':
+            elif command == '/rename' or command == '/r':
                 self.task_manager.rename_task(msg, chat)
 
-            elif command == '/duplicate':
+            elif command == '/duplicate' or command == '/dc':
                 self.task_manager.duplicate_task(msg, chat)
 
-            elif command == '/delete':
+            elif command == '/delete' or command == '/d':
                 self.task_manager.delete_task(msg, chat)
 
             elif command == '/todo':
@@ -62,31 +64,31 @@ class BotManager:
             elif command == '/done':
                 self.task_manager.set_task_status(msg, chat, constants.DONE)
 
-            elif command == '/listP':
+            elif command == '/listP' or command == '/lp':
                 order = Task.priority
                 self.task_manager.list_tasks(chat, order)
 
-            elif command == '/listI':
+            elif command == '/list' or command == '/l':
                 order = Task.id
                 self.task_manager.list_tasks(chat, order)
 
-            elif command == '/listIssues':
+            elif command == '/listIssues' or command == '/li':
                 self.issue_manager.list_issues(chat)
 
-            elif command == '/dependson':
+            elif command == '/dependson' or command == '/dp':
                 self.task_manager.depend_on_task(msg, chat)
 
-            elif command == '/priority':
+            elif command == '/priority' or command == '/p':
                 self.task_manager.prioritize_task(msg, chat)
 
-            elif command == '/duedate':
+            elif command == '/duedate' or command == '/dd':
                 self.task_manager.duedate_task(msg, chat)
 
             elif command == '/start':
                 self.url_handler.send_message("Welcome! Here is a list of things you can do.", chat)
                 self.url_handler.send_message(constants.HELP, chat)
 
-            elif command == '/help':
+            elif command == '/help' or command == '/h':
                 self.url_handler.send_message("Here is a list of things you can do.", chat)
                 self.url_handler.send_message(constants.HELP, chat)
 
