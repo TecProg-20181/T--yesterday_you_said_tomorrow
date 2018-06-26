@@ -8,6 +8,7 @@ class IssueManager:
         self.url_handler = UrlHandler()
 
     def split_message(self, msg):
+        """split a message"""
         text = ''
         if msg != '':
             if len(msg.split(' ', 1)) > 1:
