@@ -192,6 +192,7 @@ class TaskManager:
         self.url_handler.send_message(msg, chat)
 
     def query(self, status, chat, order):
+        """makes a query with those parameters"""
         query = (db.SESSION
                  .query(Task)
                  .filter_by(status=status, chat=chat)
@@ -258,6 +259,7 @@ class TaskManager:
         self.url_handler.send_message("Task {} dependencies up to date".format(task.id), chat)
 
     def split_message(self, msg):
+        """split a message"""
         text = ''
         if msg != '':
             if len(msg.split(' ', 1)) > 1:
@@ -266,6 +268,8 @@ class TaskManager:
         return msg, text
 
     def split_list(self, msg):
+        """split a list of parameters and a comand as
+        first parameter"""
         if len(msg.split()) > 1:
             ids = msg.split()[1:]
         text = msg.split()[0]
@@ -319,6 +323,7 @@ class TaskManager:
             db.SESSION.commit()
 
     def validate_date(self, text, chat):
+        """cheks if input is a valid date"""
         try:
             datetime.datetime.strptime(text, '%Y-%m-%d')
         except ValueError:
