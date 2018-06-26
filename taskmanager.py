@@ -293,7 +293,7 @@ class TaskManager:
                 if text.lower() not in ['high', 'medium', 'low']:
                     self.url_handler.send_message("""
                                     I'm not so smart, sorry. {}
-                                    Please, tell me 'high', 'medium', or 'low'
+Please, tell me 'high', 'medium', or 'low'
                                 """.format(constants.ZANY_EMOJI), chat)
                 else:
                     task.priority = self.dict_priority(text.lower())
