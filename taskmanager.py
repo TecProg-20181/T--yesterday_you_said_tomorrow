@@ -14,7 +14,7 @@ class MessageException(Exception):
 class TaskManager:
     def __init__(self):
         self.url_handler = UrlHandler()
-        
+
     def deps_text(self, task, chat, preceed=''):
         """list tasks in a tree view"""
         text = ''
@@ -237,7 +237,10 @@ class TaskManager:
                     except MessageException:
                         continue
 
-                    taskdep.parents += str(task.id) + ','
+                    aux_parents = taskdep.parents.split(',')
+                    if str(task.id) not in aux_parents:
+                        taskdep.parents += str(task.id) + ','
+                    
                     deplist = task.dependencies.split(',')
                     if str(depid) not in deplist:
                         task.dependencies += str(depid) + ','
