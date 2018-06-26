@@ -118,24 +118,25 @@ class TaskManager:
 
     def delete_task(self, msg, chat):
         """delete a task by id"""
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
-        dependencies = []
-        for item in task.dependencies.split(',')[:-1]:
-            dependencies.append(item)
-        for item in task.parents.split(',')[:-1]:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.dependencies = item.dependencies.replace('{},'.format(task.id), '')
-        for item in dependencies:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.parents = item.parents.replace('{},'.format(task.id), '')
-        db.SESSION.delete(task)
-        db.SESSION.commit()
-        self.url_handler.send_message("Task [[{}]] deleted".format(task.id), chat)
+        for id in msg.split():
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                continue
+            dependencies = []
+            for item in task.dependencies.split(',')[:-1]:
+                dependencies.append(item)
+            for item in task.parents.split(',')[:-1]:
+                querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+                item = querry.one()
+                item.dependencies = item.dependencies.replace('{},'.format(task.id), '')
+            for item in dependencies:
+                querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+                item = querry.one()
+                item.parents = item.parents.replace('{},'.format(task.id), '')
+            db.SESSION.delete(task)
+            db.SESSION.commit()
+            self.url_handler.send_message("Task [[{}]] deleted".format(task.id), chat)
 
     def set_task_status(self, msg, chat, status):
         """set status of task to TODO"""
@@ -143,7 +144,7 @@ class TaskManager:
             try:
                 task = self.get_task(id, chat)
             except MessageException:
-                return
+                continue
             task.status = status
             db.SESSION.commit()
             self.url_handler.send_message("*{}* task [[{}]] {}".format(status, task.id, task.name), chat)
