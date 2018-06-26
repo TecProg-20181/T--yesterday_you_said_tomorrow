@@ -14,7 +14,7 @@ class MessageException(Exception):
 class TaskManager:
     def __init__(self):
         self.url_handler = UrlHandler()
-        
+
     def deps_text(self, task, chat, preceed=''):
         """list tasks in a tree view"""
         text = ''
@@ -139,6 +139,7 @@ class TaskManager:
 
     def set_task_status(self, msg, chat, status):
         """set status of task to TODO"""
+        print('olas', msg.split())
         try:
             task = self.get_task(msg, chat)
         except MessageException:
