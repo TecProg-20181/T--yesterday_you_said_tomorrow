@@ -139,14 +139,14 @@ class TaskManager:
 
     def set_task_status(self, msg, chat, status):
         """set status of task to TODO"""
-        print('olas', msg.split())
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
-        task.status = status
-        db.SESSION.commit()
-        self.url_handler.send_message("*{}* task [[{}]] {}".format(status, task.id, task.name), chat)
+        for id in msg.split():
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                return
+            task.status = status
+            db.SESSION.commit()
+            self.url_handler.send_message("*{}* task [[{}]] {}".format(status, task.id, task.name), chat)
 
     def list_tasks(self, chat, order):
         """lists all the tasks"""
