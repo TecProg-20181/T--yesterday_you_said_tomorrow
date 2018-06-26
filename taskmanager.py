@@ -48,14 +48,14 @@ class TaskManager:
     def get_task(self, msg, chat):
         """send message acusing missing id in the command"""
         if not msg.isdigit():
-            self.url_handler.send_message("You must inform the task id", chat)
+            self.url_handler.send_message("You must inform the task id {}".format(constants.THINKING_EMOJI), chat)
             raise MessageException('id not provided')
         task_id = int(msg)
         query = db.SESSION.query(Task).filter_by(id=task_id, chat=chat)
         try:
             task = query.one()
         except sqlalchemy.orm.exc.NoResultFound:
-            self.url_handler.send_message("_404_ Task {} not found x.x".format(task_id), chat)
+            self.url_handler.send_message("Sorry, I didn't find task {} {}.".format(task_id, constants.CONFUSED_EMOJI), chat)
             raise MessageException('task not found')
         return task
 
@@ -69,7 +69,10 @@ class TaskManager:
                     priority='2')
         db.SESSION.add(task)
         db.SESSION.commit()
-        self.url_handler.send_message("New task *TODO* [[{}]] {}".format(task.id, task.name), chat)
+        self.url_handler.send_message("Okay, I'll write this {}.\nThe ID is [[{}]]\n{}".format(constants.WRITING_EMOJI,
+                                                                                       task.id,
+                                                                                       task.name),
+                                      chat)
         return task
 
     def rename_task(self, msg, chat):
@@ -227,7 +230,7 @@ class TaskManager:
                 item.parents = item.parents.replace('{},'.format(task.id), '')
 
             task.dependencies = ''
-            self.url_handler.send_message("Dependencies removed from task {}".format(task.id),
+            self.url_handler.send_message("Task {} doesn't have any dependencies anymore".format(task.id),
                          chat)
         else:
             for depid in text.split(' '):
@@ -282,9 +285,9 @@ class TaskManager:
             else:
                 if text.lower() not in ['high', 'medium', 'low']:
                     self.url_handler.send_message("""
-                                    The priority *must be* one of the following:
-                                    high, medium, low
-                                """, chat)
+                                    I'm not so smart, sorry. {}
+                                    Please, tell me 'high', 'medium', or 'low'
+                                """.format(constants.ZANY_EMOJI), chat)
                 else:
                     task.priority = self.dict_priority(text.lower())
                     self.url_handler.send_message("*Task {}* priority has priority *{}*"
@@ -322,7 +325,9 @@ class TaskManager:
             return
 
         if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
-            self.url_handler.send_message("""You can't travel to the past, if you can please tell us how :) """, chat)
+            self.url_handler.send_message("""
+            You can't travel to the past {}
+            If you can please tell us how :)""".format(constants.MONOCLE_EMOJI), chat)
             return False
         return True
 
