@@ -104,17 +104,18 @@ class TaskManager:
 
     def duplicate_task(self, msg, chat):
         """copy a task by id"""
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
+        for id in msg.split():
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                continue
 
-        dtask = self.new_task(task.name, chat)
+            dtask = self.new_task(task.name, chat)
 
-        for item in task.dependencies.split(',')[:-1]:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.parents += '{},'.format(dtask.id)
+            for item in task.dependencies.split(',')[:-1]:
+                querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+                item = querry.one()
+                item.parents += '{},'.format(dtask.id)
 
     def delete_task(self, msg, chat):
         """delete a task by id"""
@@ -258,53 +259,58 @@ class TaskManager:
             msg = msg.split(' ', 1)[0]
         return msg, text
 
+    def split_list(self, msg):
+        if len(msg.split()) > 1:
+            ids = msg.split()[1:]
+        text = msg.split()[0]
+        return text, ids
+
     def prioritize_task(self, msg, chat):
         """set the priority of given task"""
+        text, ids = self.split_list(msg)
 
-        msg, text = self.split_message(msg)
+        for id in ids:
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                continue
 
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
-
-        if text == '':
-            task.priority = ''
-            self.url_handler.send_message("_Cleared_ all priorities from task {}"
-                         .format(task.id), chat)
-        else:
-            if text.lower() not in ['high', 'medium', 'low']:
-                self.url_handler.send_message("""
-                                The priority *must be* one of the following:
-                                high, medium, low
-                            """, chat)
+            if text == '':
+                task.priority = ''
+                self.url_handler.send_message("_Cleared_ all priorities from task {}"
+                             .format(task.id), chat)
             else:
-                task.priority = self.dict_priority(text.lower())
-                self.url_handler.send_message("*Task {}* priority has priority *{}*"
-                             .format(task.id, text.lower()), chat)
-            db.SESSION.commit()
+                if text.lower() not in ['high', 'medium', 'low']:
+                    self.url_handler.send_message("""
+                                    The priority *must be* one of the following:
+                                    high, medium, low
+                                """, chat)
+                else:
+                    task.priority = self.dict_priority(text.lower())
+                    self.url_handler.send_message("*Task {}* priority has priority *{}*"
+                                 .format(task.id, text.lower()), chat)
+                db.SESSION.commit()
 
     def duedate_task(self, msg, chat):
         """set the priority of given task"""
-        msg, text = self.split_message(msg)
-        print(msg)
+        text, ids = self.split_list(msg)
 
+        for id in ids:
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                continue
 
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
-
-        if text == '':
-            task.duedate = ''
-            self.url_handler.send_message("_Cleared_ duedate from task {}"
-                         .format(task.name), chat)
-        else:
-            if self.validate_date(text, chat) is True:
-                task.duedate = text
-                self.url_handler.send_message("*Task {}* duedate is *{}*"
-                             .format(task.id, text), chat)
-        db.SESSION.commit()
+            if text == '':
+                task.duedate = ''
+                self.url_handler.send_message("_Cleared_ duedate from task {}"
+                             .format(task.name), chat)
+            else:
+                if self.validate_date(text, chat) is True:
+                    task.duedate = text
+                    self.url_handler.send_message("*Task {}* duedate is *{}*"
+                                 .format(task.id, text), chat)
+            db.SESSION.commit()
 
     def validate_date(self, text, chat):
         try:

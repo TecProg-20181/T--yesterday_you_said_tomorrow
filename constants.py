@@ -14,18 +14,19 @@ DONE = 'DONE'
 HELP = """
  /new NOME
  /newIssue NOME
- /todo ID
- /doing ID
- /done ID
- /delete ID
- /list{I (list by id), P (list by priority)}
+ /todo ID...
+ /doing ID...
+ /done ID...
+ /delete ID...
+ /listI
+ /listP
  /listIssues
  /rename ID NOME
  /renameIssue ID NOME
  /dependson ID ID...
  /duplicate ID
- /priority ID PRIORITY{low, medium, high}
- /duedate ID DATE{YYYY-MM-DD}
+ /priority PRIORITY{low, medium, high} ID...
+ /duedate DATE{YYYY-MM-DD} ID...
  /help
 """
 
