@@ -104,17 +104,18 @@ class TaskManager:
 
     def duplicate_task(self, msg, chat):
         """copy a task by id"""
-        try:
-            task = self.get_task(msg, chat)
-        except MessageException:
-            return
+        for id in msg.split():
+            try:
+                task = self.get_task(id, chat)
+            except MessageException:
+                continue
 
-        dtask = self.new_task(task.name, chat)
+            dtask = self.new_task(task.name, chat)
 
-        for item in task.dependencies.split(',')[:-1]:
-            querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
-            item = querry.one()
-            item.parents += '{},'.format(dtask.id)
+            for item in task.dependencies.split(',')[:-1]:
+                querry = db.SESSION.query(Task).filter_by(id=int(item), chat=chat)
+                item = querry.one()
+                item.parents += '{},'.format(dtask.id)
 
     def delete_task(self, msg, chat):
         """delete a task by id"""
