@@ -33,52 +33,42 @@ class BotManager:
             print('\n\n\n')
             print(command, msg, chat)
             print('\n\n\n')
-            
-        menu_command(command)
+
+        menu_simple_command(command)
+
+    def menu_simple_command(self, command):
+        return {
+            '/newIssue' or '/ni': self.issue_manager.new_issue(msg, chat),
+            '/renameIssue' or '/ri': self.issue_manager.rename_issue(msg, chat),
+            '/rename' or '/r': self.task_manager.rename_task(msg, chat),
+            '/duplicate' or '/dc': self.task_manager.duplicate_task(msg, chat),
+            '/delete' or '/d': self.task_manager.delete_task(msg, chat),
+            '/todo': self.task_manager.set_task_status(msg, chat, constants.TODO),
+            '/doing': self.task_manager.set_task_status(msg, chat, constants.DOING),
+            '/done': self.task_manager.set_task_status(msg, chat, constants.DONE),
+            '/listIssues' or '/li': self.issue_manager.list_issues(chat),
+            '/dependson' or '/dp': self.task_manager.depend_on_task(msg, chat),
+            '/priority' or '/p': self.task_manager.prioritize_task(msg, chat),
+            '/duedate' or '/dd': self.task_manager.duedate_task(msg, chat),
+        }.get(menu_command(command)) 
 
     def menu_command(self, command):
-            if command == '/new' or command == '/n':
-                self.task_manager.new_task(msg, chat)
-            elif command == '/newIssue' or command == '/ni':
-                self.issue_manager.new_issue(msg, chat)
-            elif command == '/renameIssue' or command == '/ri':
-                self.issue_manager.rename_issue(msg, chat)
-            elif command == '/rename' or command == '/r':
-                self.task_manager.rename_task(msg, chat)
-            elif command == '/duplicate' or command == '/dc':
-                self.task_manager.duplicate_task(msg, chat)
-            elif command == '/delete' or command == '/d':
-                self.task_manager.delete_task(msg, chat)
-            elif command == '/todo':
-                self.task_manager.set_task_status(msg, chat, constants.TODO)
-            elif command == '/doing':
-                self.task_manager.set_task_status(msg, chat, constants.DOING)
-            elif command == '/done':
-                self.task_manager.set_task_status(msg, chat, constants.DONE)
-            elif command == '/listP' or command == '/lp':
-                order = Task.priority
-                self.task_manager.list_tasks(chat, order)
-            elif command == '/list' or command == '/l':
-                order = Task.id
-                self.task_manager.list_tasks(chat, order)
-            elif command == '/listIssues' or command == '/li':
-                self.issue_manager.list_issues(chat)
-            elif command == '/dependson' or command == '/dp':
-                self.task_manager.depend_on_task(msg, chat)
-            elif command == '/priority' or command == '/p':
-                self.task_manager.prioritize_task(msg, chat)
-            elif command == '/duedate' or command == '/dd':
-                self.task_manager.duedate_task(msg, chat)
-            elif command == '/start':
-                self.url_handler.send_message("Welcome! Here is a list of things you can do.", chat)
-                self.url_handler.send_message(constants.HELP, chat)
-            elif command == '/help' or command == '/h':
-                self.url_handler.send_message("Here is a list of things you can do.", chat)
-                self.url_handler.send_message(constants.HELP, chat)
-            else:
-                response = chat_bot.predict([message['text']])
-                print(response)
-                print(message['text'])
-                response = str(response)
-                print(response)
-                self.url_handler.send_message(response[2:-2], chat)
+        if command == '/listP' or command == '/lp':
+            order = Task.priority
+            self.task_manager.list_tasks(chat, order)
+        elif command == '/list' or command == '/l':
+            order = Task.id
+            self.task_manager.list_tasks(chat, order)
+        elif command == '/start':
+            self.url_handler.send_message("Welcome! Here is a list of things you can do.", chat)
+            self.url_handler.send_message(constants.HELP, chat)
+        elif command == '/help' or command == '/h':
+            self.url_handler.send_message("Here is a list of things you can do.", chat)
+            self.url_handler.send_message(constants.HELP, chat)
+        else:
+            response = chat_bot.predict([message['text']])
+            print(response)
+            print(message['text'])
+            response = str(response)
+            print(response)
+            self.url_handler.send_message(response[2:-2], chat)
