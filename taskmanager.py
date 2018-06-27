@@ -4,7 +4,7 @@ import datetime
 import constants
 from urlhandler import UrlHandler
 from db import Task
-
+from issuemanager import split_message
 
 class MessageException(Exception):
     """Just to specify a kind of Exception"""
@@ -82,7 +82,7 @@ class TaskManager:
 
     def rename_task(self, msg, chat):
         """rename a task by id"""
-        msg, text = self.split_message(msg)
+        msg, text = issuemanager.split_message(msg)
         try:
             task = self.get_task(msg, chat)
         except MessageException:
@@ -217,7 +217,7 @@ class TaskManager:
 
     def depend_on_task(self, msg, chat):
         """set dependencies of the task"""
-        msg, text = self.split_message(msg)
+        msg, text = issuemanager.split_message(msg)
 
 
         try:
@@ -259,15 +259,6 @@ class TaskManager:
 
         db.SESSION.commit()
         self.url_handler.send_message("Task {} dependencies up to date".format(task.id), chat)
-
-    def split_message(self, msg):
-        """split a message"""
-        text = ''
-        if msg != '':
-            if len(msg.split(' ', 1)) > 1:
-                text = msg.split(' ', 1)[1]
-            msg = msg.split(' ', 1)[0]
-        return msg, text
 
     def split_list(self, msg):
         """split a list of parameters and a comand as
