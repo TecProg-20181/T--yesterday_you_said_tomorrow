@@ -1,6 +1,3 @@
-[![Maintainability](https://api.codeclimate.com/v1/badges/987476121981656f0202/maintainability)](https://codeclimate.com/github/TecProg-20181/T--yesterday_you_said_tomorrow/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/987476121981656f0202/test_coverage)](https://codeclimate.com/github/TecProg-20181/T--yesterday_you_said_tomorrow/test_coverage)
-
 # Yesterday You Said Tomorrow! - Rajesh
 
 That is a Telegram Bot that manages tasks created by user's messages. Originally created for a discipline of Programming Techniques in [Brasília University](http://www.unb.br/).
