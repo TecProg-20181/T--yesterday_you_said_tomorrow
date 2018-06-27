@@ -1,4 +1,5 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/987476121981656f0202/maintainability)](https://codeclimate.com/github/TecProg-20181/T--yesterday_you_said_tomorrow/maintainability)
+[![Build Status](https://travis-ci.com/TecProg-20181/T--yesterday_you_said_tomorrow.svg?branch=master)](https://travis-ci.com/TecProg-20181/T--yesterday_you_said_tomorrow)
 
 # Yesterday You Said Tomorrow! - Rajesh
 
