@@ -15,6 +15,13 @@ class TaskManager:
     def __init__(self):
         self.url_handler = UrlHandler()
 
+    def set_icon(self, icon_status)
+        if icon_status == 'DOING':
+            icon = constants.DOING_ICON
+        elif icon_status == 'DONE':
+            icon = constants.DONE_ICON
+        return 
+
     def deps_text(self, task, chat, preceed=''):
         """list tasks in a tree view"""
         text = ''
@@ -29,11 +36,9 @@ class TaskManager:
             dep = query.one()
 
             icon = constants.NEW_ICON
-            if dep.status == 'DOING':
-                icon = constants.DOING_ICON
-            elif dep.status == 'DONE':
-                icon = constants.DONE_ICON
-
+            
+            icon = self.set_icon(dep.status)
+            
             if i + 1 == len(task.dependencies.split(',')[:-1]):
                 line += '└── [[{}]] {} {}\n'.format(dep.id, icon, dep.name)
                 line += self.deps_text(dep, chat, preceed + '    ')
@@ -164,11 +169,8 @@ class TaskManager:
                  .order_by(Task.id))
         for task in query.all():
             icon = constants.NEW_ICON
-            if task.status == 'DOING':
-                icon = constants.DOING_ICON
-            elif task.status == 'DONE':
-                icon = constants.DONE_ICON
-
+            icon = self.set_icon(task.status)
+           
             msg += '[[{}]] {} {}\n'.format(task.id, icon, task.name)
             msg += self.deps_text(task, chat)
 
