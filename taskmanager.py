@@ -184,11 +184,16 @@ class TaskManager:
             query_result = self.query(status, chat, order)
             msg += '\n'+ status_icon + '*' + status + '*\n'
             for task in query_result.all():
+                duedate = ''
+                if task.duedate != None:
+                    if datetime.datetime.strptime(task.duedate, '%Y-%m-%d') < datetime.datetime.now():
+                        duedate = task.duedate + ' ' + constants.END_TIME_EMOJI
+                    else:
+                        duedate = task.duedate + ' ' + constants.TIME_RUN_EMOJI
                 msg += '[[{}]] {} {} {}\n'.format(task.id,
-                                                  constants.PRIORITY[self.dict_priority(task.priority)],
-                                                  task.name,
-                                                  task.duedate)
-
+                                                constants.PRIORITY[self.dict_priority(task.priority)],
+                                                task.name,
+                                                duedate)                    
         self.url_handler.send_message(msg, chat)
 
     def query(self, status, chat, order):
@@ -270,6 +275,7 @@ class TaskManager:
     def split_list(self, msg):
         """split a list of parameters and a comand as
         first parameter"""
+        ids = []
         if len(msg.split()) > 1:
             ids = msg.split()[1:]
         text = msg.split()[0]
@@ -335,7 +341,7 @@ Please, tell me 'high', 'medium', or 'low'
         if datetime.datetime.strptime(text, '%Y-%m-%d') < datetime.datetime.now():
             self.url_handler.send_message("""
             You can't travel to the past {}
-            If you can please tell us how :)""".format(constants.MONOCLE_EMOJI), chat)
+If you can please tell us how :)""".format(constants.MONOCLE_EMOJI), chat)
             return False
         return True
 
